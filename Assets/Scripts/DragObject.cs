@@ -205,7 +205,8 @@ public class DragObject : MonoBehaviour
         Debug.Log(movable_checkers.Count);
         if (movable_checkers.Count == 0)
         {
-            Debug.Log(gameBoard.getTurn() + " Lost");
+            GameObject manager = GameObject.Find("Game_Manager");
+            manager.GetComponent<GameManagment>().EndGame(gameBoard.getTurn());
         }
 
     }

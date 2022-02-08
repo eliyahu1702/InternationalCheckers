@@ -185,6 +185,7 @@ public class Board
     }
     public void RemovePieceCount(Checker c)
     {
+        if (c == null) return;
         if (gameValues.isWhitePease(c))
         {
             WhiteCheckerCount--;
@@ -223,6 +224,10 @@ public class CheckerGeneration : MonoBehaviour
     public Transform spawningpos;
     // Start is called before the first frame update
     void Start()
+    {
+     
+    }
+    public void BuildBoard()
     {
         BoardTile[,] BoardTiles = new BoardTile[10, 10];
         Debug.Log("starting now");
@@ -307,6 +312,16 @@ public class CheckerGeneration : MonoBehaviour
         gameBoard = new Board(BoardTiles);
         gameBoard.setQueen(Queen);
         gameBoard.setQueenTransform(QueenSpawn);
+    }
+    public void CascadeBoard()
+    {
+        for (int i = 0; i < 10; i++)
+        {
+            for (int j = 0; j < 10; j++)
+            {
+                gameBoard.destroyPiece(i, j);
+            }
+        }
     }
     public GameObject GetQueenObject()
     { return Queen; }

@@ -1,14 +1,13 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class BoardFlip : MonoBehaviour
 {
     // Start is called before the first frame update
-    public Vector3 rotation = new Vector3(0,0,1);
+    public Vector3 rotation = new Vector3(0, 0, 1);
     void Start()
     {
-        
+
     }
 
     // Update is called once per frame
@@ -17,6 +16,16 @@ public class BoardFlip : MonoBehaviour
         if (Input.GetKeyUp(KeyCode.F))
         {
             StartCoroutine(Waiter());
+
+        }
+        if (Input.GetKeyUp(KeyCode.R))
+        {
+
+            GameObject Board = GameObject.Find("Board");
+            Board.GetComponent<CheckerGeneration>().enabled = false;
+            Board.GetComponent<CheckerGeneration>().enabled = true;
+
+
         }
     }
     IEnumerator Waiter()
@@ -26,7 +35,15 @@ public class BoardFlip : MonoBehaviour
             transform.Rotate(rotation);
             yield return new WaitForSeconds(0.005f);
         }
-        
-      
+
+
+    }
+    public void SpinTheBoard()
+    {
+        transform.Rotate(new Vector3(0, 0, 180));
+    }
+    public void ReturnToRegularPosition()
+    {
+        transform.rotation = Quaternion.Euler(90, 0, -180);
     }
 }
