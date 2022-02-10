@@ -116,18 +116,25 @@ public class GetValidMoves : MonoBehaviour
                     if (tile.getChecker().GetColor() == turn)
                     {
                         exzists = CanTake(gameBoard, tile.getChecker(), i, j);
+                        
                         if (exzists.Count > 0)
                         {
-                            TakingCheckers.Add(tile.getChecker());
+                            gameBoard.untagAll();
+                            TakingCheckers.Add(tile.getChecker());                 
                         }
                         if (Get_Valid_Moves(gameBoard, i, j).Count > 0)
+                        {
                             movingCheckers.Add(tile.getChecker());
+                            gameBoard.untagAll();
+                        }
+                            
                     }
                     
                 }
             }
         if (TakingCheckers.Count > 0)
             return TakingCheckers;
+
         return movingCheckers;
 
     }//returns a list of movable checkers and queens
@@ -136,30 +143,45 @@ public class GetValidMoves : MonoBehaviour
         if (checker.GetType() == typeof(Queen))
             return CanTakeQueen(gameBoard, (Queen)checker, index_x, index_z);
         List<BoardTile> moves = new List<BoardTile>();
-        if (InRange(index_x + 1, index_z + 1) && !gameBoard.GetBoardTiles()[index_x + 1, index_z + 1].isEmpty() && gameBoard.GetBoardTiles()[index_x + 1, index_z + 1].isEnemyChecker(checker))
+       
+        if (InRange(index_x + 1, index_z + 1) && !gameBoard.GetBoardTiles()[index_x + 1, index_z + 1].isEmpty() && gameBoard.GetBoardTiles()[index_x + 1, index_z + 1].isEnemyChecker(checker) && !gameBoard.GetBoardTiles()[index_x + 1, index_z + 1].IsTagged())
             if (InRange(index_x + 2, index_z + 2) && gameBoard.GetBoardTiles()[index_x + 2, index_z + 2].isEmpty())
             {
                 moves.Add(gameBoard.GetBoardTiles()[index_x + 2, index_z + 2]);
-            }
-
-        if (InRange(index_x - 1, index_z + 1) && !gameBoard.GetBoardTiles()[index_x - 1, index_z + 1].isEmpty() && gameBoard.GetBoardTiles()[index_x - 1, index_z + 1].isEnemyChecker(checker))
+                gameBoard.GetBoardTiles()[index_x + 1, index_z + 1].SetTag(true);
+                List<BoardTile> more_moves = CanTake(gameBoard, checker, index_x + 2, index_z + 2);
+                if (more_moves.Count > 0)
+                    return more_moves;
+            } 
+        if (InRange(index_x - 1, index_z + 1) && !gameBoard.GetBoardTiles()[index_x - 1, index_z + 1].isEmpty() && gameBoard.GetBoardTiles()[index_x - 1, index_z + 1].isEnemyChecker(checker) && !gameBoard.GetBoardTiles()[index_x - 1, index_z + 1].IsTagged())
             if (InRange(index_x - 2, index_z + 2) && gameBoard.GetBoardTiles()[index_x - 2, index_z + 2].isEmpty())
             {
                 moves.Add(gameBoard.GetBoardTiles()[index_x - 2, index_z + 2]);
+                gameBoard.GetBoardTiles()[index_x - 1, index_z + 1].SetTag(true);
+                List<BoardTile> more_moves = CanTake(gameBoard, checker, index_x - 2, index_z + 2);
+                if (more_moves.Count > 0)
+                    return more_moves;
             }
 
-        if (InRange(index_x - 1, index_z - 1) && !gameBoard.GetBoardTiles()[index_x - 1, index_z - 1].isEmpty() && gameBoard.GetBoardTiles()[index_x - 1, index_z - 1].isEnemyChecker(checker))
+        if (InRange(index_x - 1, index_z - 1) && !gameBoard.GetBoardTiles()[index_x - 1, index_z - 1].isEmpty() && gameBoard.GetBoardTiles()[index_x - 1, index_z - 1].isEnemyChecker(checker) && !gameBoard.GetBoardTiles()[index_x - 1, index_z - 1].IsTagged())
             if (InRange(index_x - 2, index_z - 2) && gameBoard.GetBoardTiles()[index_x - 2, index_z - 2].isEmpty())
             {
                 moves.Add(gameBoard.GetBoardTiles()[index_x - 2, index_z - 2]);
+                gameBoard.GetBoardTiles()[index_x - 1, index_z - 1].SetTag(true);
+                List<BoardTile> more_moves = CanTake(gameBoard, checker, index_x - 2, index_z - 2);
+                if (more_moves.Count > 0)
+                    return more_moves;
             }
 
-        if (InRange(index_x + 1, index_z - 1) && !gameBoard.GetBoardTiles()[index_x + 1, index_z - 1].isEmpty() && gameBoard.GetBoardTiles()[index_x + 1, index_z - 1].isEnemyChecker(checker))
+        if (InRange(index_x + 1, index_z - 1) && !gameBoard.GetBoardTiles()[index_x + 1, index_z - 1].isEmpty() && gameBoard.GetBoardTiles()[index_x + 1, index_z - 1].isEnemyChecker(checker) && !gameBoard.GetBoardTiles()[index_x + 1, index_z - 1].IsTagged())
             if (InRange(index_x + 2, index_z - 2) && gameBoard.GetBoardTiles()[index_x + 2, index_z - 2].isEmpty())
             {
                 moves.Add(gameBoard.GetBoardTiles()[index_x + 2, index_z - 2]);
+                gameBoard.GetBoardTiles()[index_x + 1, index_z - 1].SetTag(true);
+                List<BoardTile> more_moves = CanTake(gameBoard, checker, index_x + 2, index_z - 2);
+                if (more_moves.Count > 0)
+                    return more_moves;
             }
-
         return moves;
     }// returns the allowed squares for a checker to go after it takes
     public static bool onPremotionsquare(Board gameBoard, Checker checker)
@@ -191,10 +213,11 @@ public class GetValidMoves : MonoBehaviour
         int temp_x = index_x, temp_z = index_z;
         while (InRange(temp_x, temp_z))
         {
-            if (InRange(temp_x + 1, temp_z + 1) && !gameBoard.GetBoardTiles()[temp_x + 1, temp_z + 1].isEmpty() && gameBoard.GetBoardTiles()[temp_x + 1, temp_z + 1].isEnemyChecker(queen))
+            if (InRange(temp_x + 1, temp_z + 1) && !gameBoard.GetBoardTiles()[temp_x + 1, temp_z + 1].isEmpty() && gameBoard.GetBoardTiles()[temp_x + 1, temp_z + 1].isEnemyChecker(queen) && !gameBoard.GetBoardTiles()[temp_x + 1, temp_z + 1].IsTagged())
                 if (InRange(temp_x + 2, temp_z + 2) && gameBoard.GetBoardTiles()[temp_x + 2, temp_z + 2].isEmpty())
                 {
                     moves.Add(gameBoard.GetBoardTiles()[temp_x + 2, temp_z + 2]);
+                    gameBoard.GetBoardTiles()[temp_x + 1, temp_z + 1].SetTag(true);
                     temp_x += 3;
                     temp_z += 3;
                     while (InRange(temp_x, temp_z) && gameBoard.GetBoardTiles()[temp_x, temp_z].isEmpty())
@@ -214,10 +237,11 @@ public class GetValidMoves : MonoBehaviour
         temp_z = index_z;
         while (InRange(temp_x, temp_z))
         {
-            if (InRange(temp_x - 1, temp_z + 1) && !gameBoard.GetBoardTiles()[temp_x - 1, temp_z + 1].isEmpty() && gameBoard.GetBoardTiles()[temp_x - 1, temp_z + 1].isEnemyChecker(queen))
+            if (InRange(temp_x - 1, temp_z + 1) && !gameBoard.GetBoardTiles()[temp_x - 1, temp_z + 1].isEmpty() && gameBoard.GetBoardTiles()[temp_x - 1, temp_z + 1].isEnemyChecker(queen) && !gameBoard.GetBoardTiles()[temp_x - 1, temp_z + 1].IsTagged())
                 if (InRange(temp_x - 2, temp_z + 2) && gameBoard.GetBoardTiles()[temp_x - 2, temp_z + 2].isEmpty())
                 {
                     moves.Add(gameBoard.GetBoardTiles()[temp_x - 2, temp_z + 2]);
+                    gameBoard.GetBoardTiles()[temp_x - 1, temp_z + 1].SetTag(true);
                     temp_x -= 3;
                     temp_z += 3;
                     while (InRange(temp_x, temp_z) && gameBoard.GetBoardTiles()[temp_x, temp_z].isEmpty())
@@ -238,10 +262,11 @@ public class GetValidMoves : MonoBehaviour
         temp_z = index_z;
         while (InRange(temp_x, temp_z))
         {
-            if (InRange(temp_x - 1, temp_z - 1) && !gameBoard.GetBoardTiles()[temp_x - 1, temp_z - 1].isEmpty() && gameBoard.GetBoardTiles()[temp_x - 1, temp_z - 1].isEnemyChecker(queen))
+            if (InRange(temp_x - 1, temp_z - 1) && !gameBoard.GetBoardTiles()[temp_x - 1, temp_z - 1].isEmpty() && gameBoard.GetBoardTiles()[temp_x - 1, temp_z - 1].isEnemyChecker(queen) && !gameBoard.GetBoardTiles()[temp_x - 1, temp_z - 1].IsTagged())
                 if (InRange(temp_x - 2, temp_z - 2) && gameBoard.GetBoardTiles()[temp_x - 2, temp_z - 2].isEmpty())
                 {
                     moves.Add(gameBoard.GetBoardTiles()[temp_x - 2, temp_z - 2]);
+                    gameBoard.GetBoardTiles()[temp_x - 1, temp_z - 1].SetTag(true);
                     temp_x -= 3;
                     temp_z -= 3;
                     while (InRange(temp_x, temp_z) && gameBoard.GetBoardTiles()[temp_x, temp_z].isEmpty())
@@ -261,10 +286,11 @@ public class GetValidMoves : MonoBehaviour
         temp_z = index_z;
         while (InRange(temp_x, temp_z))
         {
-            if (InRange(temp_x + 1, temp_z - 1) && !gameBoard.GetBoardTiles()[temp_x + 1, temp_z - 1].isEmpty() && gameBoard.GetBoardTiles()[temp_x + 1, temp_z - 1].isEnemyChecker(queen))
+            if (InRange(temp_x + 1, temp_z - 1) && !gameBoard.GetBoardTiles()[temp_x + 1, temp_z - 1].isEmpty() && gameBoard.GetBoardTiles()[temp_x + 1, temp_z - 1].isEnemyChecker(queen) && !gameBoard.GetBoardTiles()[temp_x + 1, temp_z - 1].IsTagged())
                 if (InRange(temp_x + 2, temp_z - 2) && gameBoard.GetBoardTiles()[temp_x + 2, temp_z - 2].isEmpty())
                 {
                     moves.Add(gameBoard.GetBoardTiles()[temp_x + 2, temp_z - 2]);
+                    gameBoard.GetBoardTiles()[temp_x + 1, temp_z - 1].SetTag(true);
                     temp_x += 3;
                     temp_z -= 3;
                     while (InRange(temp_x, temp_z) && gameBoard.GetBoardTiles()[temp_x, temp_z].isEmpty())

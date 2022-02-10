@@ -73,10 +73,12 @@ public class BoardTile
     int Z_Index;
     Vector3 BoardPossition;
     Checker checker;
+    bool Tagged;
     public BoardTile(Vector3 boardPossition, Checker checker)
     {
         BoardPossition = boardPossition;
         this.checker = checker;
+        Tagged = false;
     }
     public BoardTile(Vector3 boardPossition, Checker checker, int x, int z)
     {
@@ -124,6 +126,10 @@ public class BoardTile
         
     }
 
+    public bool IsTagged()
+    { return Tagged; }
+    public void SetTag(bool value)
+    { Tagged = value; }
 }
 public class Board
 {
@@ -182,6 +188,50 @@ public class Board
             }
         }
         return taken;
+    }
+    public void untagAll()
+    {
+        for (int i = 0; i < 10; i++)
+        {
+            for (int j = 0; j < 10; j++)
+            {
+                if (BoardTiles[i, j].IsTagged())
+                    BoardTiles[i, j].SetTag(false);
+            }
+        }
+    }
+    public int TaggedCount()
+    {
+        int count = 0;
+        for (int i = 0; i < 10; i++)
+        {
+            for (int j = 0; j < 10; j++)
+            {
+                if (BoardTiles[i, j].IsTagged())
+                {
+                    count++;
+                }
+
+            }
+        }
+        return count;
+    }
+    public bool DestoyTagged()
+    {
+        bool destroyed = false;
+        for (int i = 0; i < 10; i++)
+        {
+            for (int j = 0; j < 10; j++)
+            {
+                if (BoardTiles[i, j].IsTagged())
+                {
+                    BoardTiles[i, j].DestroyPiece();
+                    destroyed = true;
+                }
+                    
+            }
+        }
+        return destroyed;
     }
     public void RemovePieceCount(Checker c)
     {
