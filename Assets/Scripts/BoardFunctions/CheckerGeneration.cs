@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 public static class gameValues // class for the values of the game. all numbers are here 
 {
     public static int whiteChecker() { return 1; }
@@ -288,7 +289,7 @@ public class CheckerGeneration : MonoBehaviour
             countercols = 0;
             for (float j = 4.5f; j >= -4.5f; j--)
             {
-                BoardTiles[counterrows, countercols] = new BoardTile(new Vector3(j, 8.5f, i), null);
+                BoardTiles[counterrows, countercols] = new BoardTile(new Vector3(j, 8.5f, i), null,counterrows,countercols);
                 countercols++;
             }
             counterrows++;
@@ -362,6 +363,13 @@ public class CheckerGeneration : MonoBehaviour
         gameBoard = new Board(BoardTiles);
         gameBoard.setQueen(Queen);
         gameBoard.setQueenTransform(QueenSpawn);
+        GameObject manager = GameObject.Find("Game_Manager");
+        if (manager.GetComponent<GameManager>().GetPlayingAi() && !manager.GetComponent<GameManager>().GetPlayingWhite())
+        {
+           
+            List<Checker> movable_checkers = GetValidMoves.MovableCheckers(gameBoard, gameBoard.getTurn());
+            manager.GetComponent<ComputerPlayer>().PlayRandomMove(gameBoard, movable_checkers);
+        }
     }
     public void CascadeBoard()
     {
@@ -399,6 +407,8 @@ public class CheckerGeneration : MonoBehaviour
             gameBoard.GetBoardTiles()[index_x, index_z].setChecker(queen);
         }
     }
+    public Board GetBoard()
+    { return gameBoard; }
 
 }
 

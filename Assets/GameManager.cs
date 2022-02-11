@@ -9,6 +9,7 @@ public class GameManager : MonoBehaviour
     public Canvas GameEndCanvas;
     public Text outcomeText;
     public bool Playing_White = true;
+    public bool Playing_Ai = true;
 
     // Update is called once per frame
     public void ExitTheGame()
@@ -20,6 +21,7 @@ public class GameManager : MonoBehaviour
     public void EndGame(int LosingTurn)
     {
         GameObject Board = GameObject.Find("Board");
+        GameEndCanvas.enabled = true;
         GameEndCanvas.gameObject.SetActive(true);
         if (LosingTurn == gameValues.whiteChecker())
         {
@@ -43,4 +45,10 @@ public class GameManager : MonoBehaviour
     {
         Playing_White = setting;
     }
+    public void setPlayingAi(bool value)
+    { Playing_Ai = value; }
+    public bool GetPlayingAi()
+    { return Playing_Ai; }
+    public bool GetPlayingWhite()
+    { return Playing_White; }
 }

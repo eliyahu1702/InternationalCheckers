@@ -16,6 +16,7 @@ public class DragObject : MonoBehaviour
     int index_x, index_z, index_highlight_x, index_highlight_z, index_taken_x, index_taken_z;
     public Vector3 location, temp_location;
     List<BoardTile> AdditionalMoves = null;
+    public GameObject manager;
     List<Checker> movable_checkers;
     Stack<BoardTile> tileStack;
     Ray ray;
@@ -27,10 +28,11 @@ public class DragObject : MonoBehaviour
         GameObject board = GameObject.Find("Board");
         gameBoard = board.GetComponent<CheckerGeneration>().gameBoard;
         tileStack = new Stack<BoardTile>();
+        manager = GameObject.Find("Game_Manager");
     }
     void OnMouseDown()
     {
-        gameBoard.untagAll();
+        
         mZCoord = Camera.main.WorldToScreenPoint(
          gameObject.transform.position).z;
         // Store offset = gameobject world pos - mouse world pos
@@ -44,8 +46,6 @@ public class DragObject : MonoBehaviour
         SelectedPiece = PieceFromTransform(location);
 
         if (SelectedPiece == null || !movable_checkers.Contains(SelectedPiece) || gameBoard.getTurn() != SelectedPiece.GetColor()) return;
-
-        gameBoard.untagAll();
         moves = GetValidMoves.Get_Valid_Moves(gameBoard, index_x, index_z);
 
         /*if (moves.Count == 0)
@@ -170,11 +170,12 @@ public class DragObject : MonoBehaviour
             {
                 bool took_pieace;
                 transform.position = temp_location;
+                
                 ChangeBoard.changePossition(gameBoard, index_x, index_z, index_highlight_x, index_highlight_z);
                 movedChecker = gameBoard.GetBoardTiles()[index_highlight_x, index_highlight_z].getChecker();
                 if (gameValues.isChecker(movedChecker))
                 {
-                    BackTrack(index_x, index_z, index_highlight_x, index_highlight_z);
+                    BackTrack(gameBoard,index_x, index_z, index_highlight_x, index_highlight_z);
                     unpackTaggedStack();
                     took_pieace = gameBoard.DestoyTagged();
                 }
@@ -188,6 +189,13 @@ public class DragObject : MonoBehaviour
                 if (!took_pieace || AdditionalMoves.Count == 0)
                 {
                     gameBoard.ChangeTurn();
+                    movable_checkers = GetValidMoves.MovableCheckers(gameBoard, gameBoard.getTurn());
+                    if (movable_checkers.Count == 0)
+                    {
+                        manager.GetComponent<GameManager>().EndGame(gameBoard.getTurn());
+                    }
+                    else
+                        manager.GetComponent<ComputerPlayer>().PlayRandomMove(gameBoard, movable_checkers);
                 }
                     
                 //Debug.Log("White Material count = " + gameBoard.getWhiteCheckerCount() + " Black material count = " + gameBoard.getBlackCheckerCount());
@@ -198,6 +206,8 @@ public class DragObject : MonoBehaviour
                 ChangeBoard.changePossition(gameBoard, index_x, index_z, index_highlight_x, index_highlight_z);
                 movedChecker = gameBoard.GetBoardTiles()[index_highlight_x, index_highlight_z].getChecker();
                 gameBoard.ChangeTurn();
+                movable_checkers = GetValidMoves.MovableCheckers(gameBoard,gameBoard.getTurn());
+                manager.GetComponent<ComputerPlayer>().PlayRandomMove(gameBoard, movable_checkers);
                 playMovingNoice(movedChecker);
 
             }
@@ -213,16 +223,81 @@ public class DragObject : MonoBehaviour
         else
         {
             transform.position = location;
-            gameBoard.untagAll();
         }
         movable_checkers = GetValidMoves.MovableCheckers(gameBoard, gameBoard.getTurn());
         if (movable_checkers.Count == 0)
         {
-            GameObject manager = GameObject.Find("Game_Manager");
             manager.GetComponent<GameManager>().EndGame(gameBoard.getTurn());
         }
-        //Debug.Log(gameBoard.getTurn());
-        
+    }
+
+    public void MoveMade(Board gameBoard,int src_x, int src_z, int dest_x, int dest_z)
+    {
+        Checker movedChecker = gameBoard.GetBoardTiles()[src_x, src_z].getChecker();
+        if (gameBoard.TaggedCount() > 0)
+        {
+            bool took_pieace;
+            gameBoard.GetBoardTiles()[src_x, src_z].getChecker().GetCheckerObject().transform.position = gameBoard.GetBoardTiles()[dest_x, dest_z].getBoardPossition();
+            ChangeBoard.changePossition(gameBoard, src_x, src_z, dest_x, dest_z);
+            movedChecker = gameBoard.GetBoardTiles()[dest_x, dest_z].getChecker();
+            if (gameValues.isChecker(movedChecker))
+            {
+                BackTrack(gameBoard,src_x, src_z, dest_x, dest_z);
+                unpackTaggedStack();
+                took_pieace = gameBoard.DestoyTagged();
+            }
+            else
+                took_pieace = gameBoard.destroyPiecesBetween(src_x, src_z, dest_x, dest_z);
+            if (took_pieace)
+                playTakingNoice();
+            else
+                playMovingNoice(movedChecker);
+            AdditionalMoves = GetValidMoves.CanTake(gameBoard, movedChecker, dest_x, dest_z);
+            if (!took_pieace || AdditionalMoves.Count == 0)
+            {
+                gameBoard.ChangeTurn();
+                movable_checkers = GetValidMoves.MovableCheckers(gameBoard, gameBoard.getTurn());
+                if (movable_checkers.Count == 0)
+                {
+                    manager.GetComponent<GameManager>().EndGame(gameBoard.getTurn());
+                }
+            }
+            else
+            {
+                if (movable_checkers.Count == 0)
+                {
+                    manager.GetComponent<GameManager>().EndGame(gameBoard.getTurn());
+                }
+                else 
+                {
+                    movable_checkers = GetValidMoves.MovableCheckers(gameBoard, gameBoard.getTurn());
+                    manager.GetComponent<ComputerPlayer>().PlayRandomMove(gameBoard, movable_checkers);
+
+                }        
+            }
+
+            //Debug.Log("White Material count = " + gameBoard.getWhiteCheckerCount() + " Black material count = " + gameBoard.getBlackCheckerCount());
+        }
+        else
+        {
+            gameBoard.GetBoardTiles()[src_x, src_z].getChecker().GetCheckerObject().transform.position = gameBoard.GetBoardTiles()[dest_x, dest_z].getBoardPossition();
+            ChangeBoard.changePossition(gameBoard, src_x, src_z, dest_x, dest_z);
+            movedChecker = gameBoard.GetBoardTiles()[dest_x, dest_z].getChecker();
+            gameBoard.ChangeTurn();
+            movable_checkers = GetValidMoves.MovableCheckers(gameBoard, gameBoard.getTurn());
+            playMovingNoice(movedChecker);
+
+        }
+        gameBoard.untagAll();
+        if (GetValidMoves.onPremotionsquare(gameBoard, movedChecker) && AdditionalMoves.Count == 0)
+        {
+            CheckerGeneration.QueenPiece(gameBoard, dest_x, dest_z);
+            playPromotionNoice();
+        }
+        if (movable_checkers.Count == 0)
+        {
+            manager.GetComponent<GameManager>().EndGame(gameBoard.getTurn());
+        }
     }
     private void OnMouseUpAsButton()
     {
@@ -252,7 +327,7 @@ public class DragObject : MonoBehaviour
         GameObject Board = GameObject.Find("Board");
         Board.GetComponent<playGameSounds>().playPromotion();
     }
-    public bool BackTrack(int src_x, int src_z, int dest_x, int dest_z)
+    public bool BackTrack(Board gameBoard,int src_x, int src_z, int dest_x, int dest_z)
     {
         bool took = false;
         if (src_x == dest_x && src_z == dest_z)
@@ -262,7 +337,7 @@ public class DragObject : MonoBehaviour
         if (GetValidMoves.InRange(src_x + 1, src_z + 1) && gameBoard.GetBoardTiles()[src_x + 1, src_z + 1].IsTagged())
         {
             gameBoard.GetBoardTiles()[src_x + 1, src_z + 1].SetTag(false);
-            if (BackTrack(src_x + 2, src_z + 2, dest_x, dest_z))
+            if (BackTrack(gameBoard,src_x + 2, src_z + 2, dest_x, dest_z))
             {
                 tileStack.Push(gameBoard.GetBoardTiles()[src_x + 1, src_z + 1]);
                 took = true;
@@ -271,7 +346,7 @@ public class DragObject : MonoBehaviour
         if (GetValidMoves.InRange(src_x - 1, src_z + 1) && gameBoard.GetBoardTiles()[src_x - 1, src_z + 1].IsTagged())
         {
             gameBoard.GetBoardTiles()[src_x - 1, src_z + 1].SetTag(false);
-            if (BackTrack(src_x - 2, src_z + 2, dest_x, dest_z))
+            if (BackTrack(gameBoard, src_x - 2, src_z + 2, dest_x, dest_z))
             {
                 tileStack.Push(gameBoard.GetBoardTiles()[src_x - 1, src_z + 1]);
                 took = true;
@@ -280,7 +355,7 @@ public class DragObject : MonoBehaviour
         if (GetValidMoves.InRange(src_x - 1, src_z - 1) && gameBoard.GetBoardTiles()[src_x - 1, src_z - 1].IsTagged())
         {
             gameBoard.GetBoardTiles()[src_x - 1, src_z - 1].SetTag(false);
-            if (BackTrack(src_x - 2, src_z - 2, dest_x, dest_z))
+            if (BackTrack(gameBoard, src_x - 2, src_z - 2, dest_x, dest_z))
             {
                 tileStack.Push(gameBoard.GetBoardTiles()[src_x - 1, src_z - 1]);
                 took = true;
@@ -289,7 +364,7 @@ public class DragObject : MonoBehaviour
         if (GetValidMoves.InRange(src_x + 1, src_z - 1) && gameBoard.GetBoardTiles()[src_x + 1, src_z - 1].IsTagged())
         {
             gameBoard.GetBoardTiles()[src_x + 1, src_z - 1].SetTag(false);
-            if (BackTrack(src_x + 2, src_z - 2, dest_x, dest_z))
+            if (BackTrack(gameBoard, src_x + 2, src_z - 2, dest_x, dest_z))
             {
                 tileStack.Push(gameBoard.GetBoardTiles()[src_x + 1, src_z - 1]);
                 took = true;
