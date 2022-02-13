@@ -387,7 +387,15 @@ public class CheckerGeneration : MonoBehaviour
     {
         Queen queen;
         GameObject MynewObject = new GameObject();
-        Checker temp = gameBoard.GetBoardTiles()[index_x, index_z].getChecker();
+        Checker temp;
+        try
+        {
+            temp = gameBoard.GetBoardTiles()[index_x, index_z].getChecker();
+        }
+        catch   
+        {
+            temp = new Checker(MynewObject,index_x == 0 ? gameValues.whiteChecker() : gameValues.blackChecker());
+        }
         gameBoard.destroyPiece(index_x, index_z);
         if (gameValues.isWhitePease(temp))
         {

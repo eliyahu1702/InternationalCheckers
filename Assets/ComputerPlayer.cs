@@ -46,7 +46,7 @@ public class ComputerPlayer : MonoBehaviour
         }
         return null;
     }
-   /* public BoardTile DestenationTile(Board gameBoard,BoardTile srcTile)
+    /*public double Evalueate(Board gameBoard) // TODO: Evaluate Possition and Display it on screan
     {
         
     }*/

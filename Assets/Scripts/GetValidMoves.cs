@@ -194,16 +194,33 @@ public class GetValidMoves : MonoBehaviour
             {
                 for (int i = 0; i < 10; i++)
                 {
-                    if (gameBoard.GetBoardTiles()[9, i].getChecker() == checker)
-                        return true;
+                    try
+                    {
+                        if (gameBoard.GetBoardTiles()[9, i].getChecker() == checker)
+                            return true;
+                    }
+                    catch 
+                    {
+                        Debug.Log(9 + " " + i + " throws exception");
+                        continue;
+                    }
+                   
                 }
             }
             else
             {
                 for (int i = 0; i < 10; i++)
                 {
-                    if (gameBoard.GetBoardTiles()[0, i].getChecker() == checker)
-                        return true;
+                    try
+                    {
+                        if (gameBoard.GetBoardTiles()[0, i].getChecker() == checker)
+                            return true;
+                    }
+                    catch
+                    {
+                        Debug.Log(0+ " " + i + " throws exception");
+                        continue;
+                    }
                 }
             }
         }

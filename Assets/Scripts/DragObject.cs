@@ -212,7 +212,8 @@ public class DragObject : MonoBehaviour
 
             }
             gameBoard.untagAll();
-            if (GetValidMoves.onPremotionsquare(gameBoard, movedChecker) && AdditionalMoves.Count == 0)
+            
+            if (GetValidMoves.onPremotionsquare(gameBoard, movedChecker) && (AdditionalMoves == null  || AdditionalMoves.Count == 0))
             {
                 CheckerGeneration.QueenPiece(gameBoard, index_highlight_x, index_highlight_z);
                 playPromotionNoice();
