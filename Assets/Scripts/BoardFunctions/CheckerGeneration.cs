@@ -2,6 +2,8 @@ using UnityEngine;
 using System.Collections.Generic;
 public static class gameValues // class for the values of the game. all numbers are here 
 {
+    public static int WhiteTurn() { return 1; }
+    public static int BlackTurn() { return 2; }
     public static int whiteChecker() { return 1; }
     public static int blackChecker() { return 2; }
     public static int WhiteQueen() { return 3; }
@@ -51,7 +53,8 @@ public class Checker
     }
     public void destroy()
     {
-        Object.Destroy(gameObject);
+        if(gameObject!=null)
+            Object.Destroy(gameObject);
     }
     public int GetColor()
     {
@@ -59,6 +62,8 @@ public class Checker
             return 2;
         return 1;
     }
+    public virtual Checker Clone()
+    { return new Checker(null, this.value); }
 }
 public class Queen : Checker
 {
@@ -66,7 +71,8 @@ public class Queen : Checker
     {
 
     }
-
+    public override Checker Clone()
+    { return new Queen(null, this.value); }
 }
 public class BoardTile
 {
@@ -122,9 +128,9 @@ public class BoardTile
         if (checker != null)
         {
             checker.destroy();
-            checker = null;
         }
-        
+        checker = null;
+
     }
 
     public bool IsTagged()
