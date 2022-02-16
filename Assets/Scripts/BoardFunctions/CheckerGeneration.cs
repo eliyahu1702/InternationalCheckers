@@ -2,6 +2,8 @@ using UnityEngine;
 using System.Collections.Generic;
 public static class gameValues // class for the values of the game. all numbers are here 
 {
+    public static int searchDeapth()
+    { return 3; }
     public static int WhiteTurn() { return 1; }
     public static int BlackTurn() { return 2; }
     public static int whiteChecker() { return 1; }
@@ -171,6 +173,8 @@ public class Board
     { this.evaluation = eval; }
     public int getTurn()
     { return turn; }
+    public void setTurn(int turn)
+    { this.turn = turn; }
     public void ChangeTurn()
     { if (!takingTurn) turn ^= 3; }
     public bool WhiteWin() { return this.BlackCheckerCount == 0; }
@@ -196,6 +200,8 @@ public class Board
         }
         return taken;
     }
+    public int GetOpisiteTurn()
+    { return turn ^ 3; }
     public void untagAll()
     {
         for (int i = 0; i < 10; i++)
@@ -372,9 +378,7 @@ public class CheckerGeneration : MonoBehaviour
         GameObject manager = GameObject.Find("Game_Manager");
         if (manager.GetComponent<GameManager>().GetPlayingAi() && !manager.GetComponent<GameManager>().GetPlayingWhite())
         {
-           
-            List<Checker> movable_checkers = GetValidMoves.MovableCheckers(gameBoard, gameBoard.getTurn());
-            manager.GetComponent<ComputerPlayer>().PlayRandomMove(gameBoard, movable_checkers);
+            manager.GetComponent<ComputerPlayer>().PlayRandomMove(gameBoard);
         }
     }
     public void CascadeBoard()

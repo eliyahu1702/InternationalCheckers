@@ -190,13 +190,12 @@ public class DragObject : MonoBehaviour
                 {
                     Debug.Log(manager.GetComponent<ComputerPlayer>().BoardEvaluation(gameBoard));
                     gameBoard.ChangeTurn();
-                    movable_checkers = GetValidMoves.MovableCheckers(gameBoard, gameBoard.getTurn());
-                    if (movable_checkers.Count == 0)
+                    if ( movable_checkers == null || movable_checkers.Count == 0)
                     {
                         manager.GetComponent<GameManager>().EndGame(gameBoard.getTurn());
                     }
                     else
-                        manager.GetComponent<ComputerPlayer>().PlayRandomMove(gameBoard, movable_checkers);
+                        manager.GetComponent<ComputerPlayer>().PlayRandomMove(gameBoard);
                 }
                     
                 //Debug.Log("White Material count = " + gameBoard.getWhiteCheckerCount() + " Black material count = " + gameBoard.getBlackCheckerCount());
@@ -208,8 +207,7 @@ public class DragObject : MonoBehaviour
                 movedChecker = gameBoard.GetBoardTiles()[index_highlight_x, index_highlight_z].getChecker();
                 Debug.Log(manager.GetComponent<ComputerPlayer>().BoardEvaluation(gameBoard));
                 gameBoard.ChangeTurn();
-                movable_checkers = GetValidMoves.MovableCheckers(gameBoard,gameBoard.getTurn());
-                manager.GetComponent<ComputerPlayer>().PlayRandomMove(gameBoard, movable_checkers);
+                manager.GetComponent<ComputerPlayer>().PlayRandomMove(gameBoard);
                 playMovingNoice(movedChecker);
 
             }
@@ -226,7 +224,7 @@ public class DragObject : MonoBehaviour
             transform.position = location;
         }
         movable_checkers = GetValidMoves.MovableCheckers(gameBoard, gameBoard.getTurn());
-        if (movable_checkers.Count == 0)
+        if (movable_checkers == null || movable_checkers.Count == 0)
         {
             manager.GetComponent<GameManager>().EndGame(gameBoard.getTurn());
         }
@@ -259,7 +257,7 @@ public class DragObject : MonoBehaviour
             {
                 gameBoard.ChangeTurn();
                 movable_checkers = GetValidMoves.MovableCheckers(gameBoard, gameBoard.getTurn());
-                if (movable_checkers.Count == 0)
+                if (movable_checkers == null || movable_checkers.Count == 0)
                 {
                     manager.GetComponent<GameManager>().EndGame(gameBoard.getTurn());
                 }
@@ -272,8 +270,7 @@ public class DragObject : MonoBehaviour
                 }
                 else 
                 {
-                    movable_checkers = GetValidMoves.MovableCheckers(gameBoard, gameBoard.getTurn());
-                    manager.GetComponent<ComputerPlayer>().PlayRandomMove(gameBoard, movable_checkers);
+                    manager.GetComponent<ComputerPlayer>().PlayRandomMove(gameBoard);
 
                 }        
             }
@@ -300,6 +297,7 @@ public class DragObject : MonoBehaviour
         {
             manager.GetComponent<GameManager>().EndGame(gameBoard.getTurn());
         }
+        Debug.Log(manager.GetComponent<ComputerPlayer>().BoardEvaluation(gameBoard));
     }
     public void MoveCheckerPosition(Board gameBoard, int src_x, int src_z, int dest_x, int dest_z)
     {

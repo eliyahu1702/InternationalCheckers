@@ -1,6 +1,52 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+public class GameMove
+{
+    public int source_x;
+    public int source_z;
+    public int target_x;
+    public int target_z;
+    public GameMove(int source_x, int source_z, int target_x, int target_z)
+    {
+        this.source_x = source_x;
+        this.source_z = source_z;
+        this.target_x = target_x; 
+        this.target_z = target_z;
+    }
+    public GameMove()
+    {
+        source_x = 0;
+        source_z = 0;  
+        target_x = 0;
+        target_z = 0;
+    }
+    public void UpdateMove(int source_x, int source_z, int target_x, int target_z)
+    {
+        this.source_x = source_x;
+        this.source_z = source_z;
+        this.target_x = target_x;
+        this.target_z = target_z;
+    }
+    public int GetSrc_X()
+        { return source_x; }
+    public void SetSrc_X(int src_x)
+    { source_x = src_x; }
+
+    public int GetSrc_Z()
+        { return source_z; }
+    public void SetSrc_Z(int src_z)
+    { source_z = src_z; }
+    public int GetTrt_X()
+        { return target_x; }
+    public void SetTrt_X(int trt_x)
+    { target_x = trt_x; }
+    public int GetTrt_Z()
+        { return target_z; }
+    public void SetTrt_Z(int trt_z)
+    { target_z = trt_z; }
+
+}
 public class ComputerPlayer : MonoBehaviour
 {
     public Stack<BoardTile> tileStack;
@@ -17,24 +63,19 @@ public class ComputerPlayer : MonoBehaviour
     {
 
     }
-    public void PlayRandomMove(Board gameBoard, List<Checker> checkers)
+    public void PlayRandomMove(Board gameBoard)
     {
         if (!GameManager.GetComponent<GameManager>().GetPlayingAi())
             return;
+        List<Checker> checkers = GetValidMoves.MovableCheckers(gameBoard, gameBoard.getTurn());
         if (checkers.Count <= 0)
         {
             GameManager.GetComponent<GameManager>().EndGame(gameBoard.getTurn());
             return;
         }
-        int index = Random.Range(0, checkers.Count);
-        Checker pickedChecker = checkers[index];
-        BoardTile tileofChecker = findTile(gameBoard, pickedChecker);
-        List<BoardTile> PossibleCheckerMoves = GetValidMoves.Get_Valid_Moves(gameBoard, tileofChecker.getX(), tileofChecker.getZ());
-        index = Random.Range(0, PossibleCheckerMoves.Count);
 
-        Debug.Log(Evaluate(gameBoard, gameValues.WhiteTurn()) - Evaluate(gameBoard, gameValues.BlackTurn()));
-
-        GameManager.GetComponent<DragObject>().MoveMade(gameBoard, tileofChecker.getX(), tileofChecker.getZ(), PossibleCheckerMoves[index].getX(), PossibleCheckerMoves[index].getZ());
+        GameMove bestMove = ComputerMove(gameBoard);
+        GameManager.GetComponent<DragObject>().MoveMade(gameBoard, bestMove.GetSrc_X(),bestMove.GetSrc_Z() ,bestMove.GetTrt_X(), bestMove.GetTrt_Z());
     }
     public BoardTile findTile(Board gameBoard, Checker checker)
     {
@@ -48,15 +89,99 @@ public class ComputerPlayer : MonoBehaviour
         }
         return null;
     }
+    public GameMove ComputerMove(Board gameBoard)
+    {
+        double maxEval = gameBoard.getTurn() == gameValues.WhiteTurn() ? double.NegativeInfinity : double.PositiveInfinity;
+        int count = 0;
+        GameMove bestMove = new GameMove();
+        if (!GameManager.GetComponent<GameManager>().GetPlayingAi())
+            return null;
+        List<Checker> checkers = GetValidMoves.MovableCheckers(gameBoard, gameBoard.getTurn());
+        if (checkers.Count <= 0)
+        {
+            GameManager.GetComponent<GameManager>().EndGame(gameBoard.getTurn());
+            return null;
+        }
+        foreach(Checker SelecteChecker in checkers)
+        {
+            BoardTile tileofChecker = findTile(gameBoard, SelecteChecker);
+            List<BoardTile> PossibleCheckerMoves = GetValidMoves.Get_Valid_Moves(gameBoard, tileofChecker.getX(), tileofChecker.getZ());
+            foreach (BoardTile tile in PossibleCheckerMoves)
+            {
+                count++;
+                Board newBoard = CloneBoard(gameBoard);
+                SimulateMove(newBoard,tileofChecker.getX(),tileofChecker.getZ(),tile.getX(),tile.getZ());
+                double boardEval = BoardEvaluation(newBoard);
+                if (gameBoard.getTurn() == gameValues.WhiteTurn())
+                {
+                    if (boardEval > maxEval)
+                    {
+                        bestMove.UpdateMove(tileofChecker.getX(), tileofChecker.getZ(), tile.getX(), tile.getZ());
+                        maxEval = boardEval;
+                    }
+                }
+                else
+                {
+                    if (boardEval < maxEval)
+                    {
+                        bestMove.UpdateMove(tileofChecker.getX(), tileofChecker.getZ(), tile.getX(), tile.getZ());
+                        maxEval = boardEval;
+                    }
+                }
+               // Debug.Log("move number - "+count+": "+(Evaluate(newBoard, gameValues.WhiteTurn()) - Evaluate(newBoard, gameValues.BlackTurn())));
+            }
+        }
+        GetValidMoves.Get_Valid_Moves(gameBoard, bestMove.GetSrc_X(), bestMove.GetSrc_Z());
+        return bestMove;
+    }
+    public void SimulateMove(Board gameBoard, int src_x, int src_z, int dest_x, int dest_z)
+    {
+        List<BoardTile> AdditionalMoves = new List<BoardTile>();
+        Checker movedChecker = gameBoard.GetBoardTiles()[src_x, src_z].getChecker();
+        if (gameBoard.TaggedCount() > 0)
+        {
+            bool took_pieace;
+            ChangeBoard.changePossition(gameBoard, src_x, src_z, dest_x, dest_z);
+            movedChecker = gameBoard.GetBoardTiles()[dest_x, dest_z].getChecker();
+            if (gameValues.isChecker(movedChecker))
+            {
+                BackTrack(gameBoard, src_x, src_z, dest_x, dest_z);
+                unpackTaggedStack();
+                took_pieace = gameBoard.DestoyTagged();
+            }
+            else
+                took_pieace = gameBoard.destroyPiecesBetween(src_x, src_z, dest_x, dest_z);
+            AdditionalMoves = GetValidMoves.CanTake(gameBoard, movedChecker, dest_x, dest_z);
+            if (!took_pieace || AdditionalMoves.Count == 0)
+            {
+                gameBoard.ChangeTurn();
+            }
+
+            //Debug.Log("White Material count = " + gameBoard.getWhiteCheckerCount() + " Black material count = " + gameBoard.getBlackCheckerCount());
+        }
+        else
+        {
+            ChangeBoard.changePossition(gameBoard, src_x, src_z, dest_x, dest_z);
+            movedChecker = gameBoard.GetBoardTiles()[dest_x, dest_z].getChecker();
+            gameBoard.ChangeTurn();
+
+        }
+        gameBoard.untagAll();
+        if (GetValidMoves.onPremotionsquare(gameBoard, movedChecker) && AdditionalMoves.Count == 0)
+        {
+            gameBoard.GetBoardTiles()[dest_x, dest_z].setChecker(new Queen(null, movedChecker.GetValue() + 2));
+        }
+    }
     public double BoardEvaluation(Board gameBoard)
     {
         return Evaluate(gameBoard, gameValues.WhiteTurn()) - Evaluate(gameBoard, gameValues.BlackTurn());
     }
     public double Evaluate(Board gameBoard, int side) // TODO: Evaluate Possition and Display it on screan
     {
-
+        bool tempo = false;
         BoardTile[,] Tiles = gameBoard.GetBoardTiles();
-
+        if (gameBoard.getTurn() == side)
+            tempo = true;
         double material_count = 0;
         double undefended_checkers = 0;
         double centralized_checkers = 0;
@@ -69,7 +194,7 @@ public class ComputerPlayer : MonoBehaviour
                 {
                     if (checker.GetColor() == side)
                     {
-                        material_count += gameValues.isChecker(checker) ? 1 : 4;
+                        material_count += gameValues.isChecker(checker) ? 1.3 : 5.6;
                         if (UndefendenAttackedChecker(gameBoard, i, j))
                         {
                             undefended_checkers++;
@@ -85,9 +210,10 @@ public class ComputerPlayer : MonoBehaviour
                 }
             }
         }
-        return material_count - (undefended_checkers * 0.5) + centralized_checkers + undefendedBackRow(gameBoard, side);
-    }
 
+        undefended_checkers *= tempo ? 0.05 : 0.3;
+        return material_count - undefended_checkers + centralized_checkers + undefendedBackRow(gameBoard, side);
+    }
     private bool UndefendenAttackedChecker(Board gameBoard, int index_x, int index_z)
     {
         bool underAttack = false;
@@ -202,14 +328,34 @@ public class ComputerPlayer : MonoBehaviour
     }
     private double CentralizedChecker(Board gameBoard, int index_x, int index_z)
     {
+        double eval = 0;
         if (index_x == 4 || index_x == 5)
         {
+            try
+            {
+                if (gameBoard.GetBoardTiles()[index_x - 1, index_z - 1].getChecker().GetColor() == gameBoard.GetBoardTiles()[index_x, index_z].getChecker().GetColor())
+                    eval += 0.2;
+                if (gameBoard.GetBoardTiles()[index_x + 1, index_z + 1].getChecker().GetColor() == gameBoard.GetBoardTiles()[index_x, index_z].getChecker().GetColor())
+                    eval += 0.2;
+                if (gameBoard.GetBoardTiles()[index_x + 1, index_z - 1].getChecker().GetColor() == gameBoard.GetBoardTiles()[index_x, index_z].getChecker().GetColor())
+                    eval += 0.2;
+                if (gameBoard.GetBoardTiles()[index_x - 1, index_z + 1].getChecker().GetColor() == gameBoard.GetBoardTiles()[index_x, index_z].getChecker().GetColor())
+                    eval += 0.2;
+            }
+            catch
+            {
+                eval += 0.1;
+            }
             if (index_z >= 4 && index_z <= 6)
-                return 0.1;
-            return 0.05;
+                eval += 0.1;
+            eval += 0.2;
         }
         return 0;
     }
+    //private double closeToPromotion(Board gameBoard, int side)
+    //{
+    //    if(side = )
+    //}
     private double undefendedBackRow(Board gameBoard, int turn)
     {
         double backRowCount = 0;
@@ -250,7 +396,6 @@ public class ComputerPlayer : MonoBehaviour
         Board newBoard = null;
         BoardTile[,]
         BoardTiles = new BoardTile[10, 10];
-        Debug.Log("Constructing new Board");
         int counterrows = 0;
         int countercols = 0;
         for (float i = 4.5f; i >= -4.5; i--)
@@ -278,6 +423,7 @@ public class ComputerPlayer : MonoBehaviour
             }
         }
         newBoard = new Board(BoardTiles);
+        newBoard.setTurn(gameBoard.getTurn());
         return newBoard;
     }
     public bool BackTrack(Board gameBoard, int src_x, int src_z, int dest_x, int dest_z)
