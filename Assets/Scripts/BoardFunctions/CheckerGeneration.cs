@@ -1,5 +1,4 @@
 using UnityEngine;
-using System.Collections.Generic;
 public static class gameValues // class for the values of the game. all numbers are here 
 {
     public static int searchDeapth()
@@ -31,6 +30,31 @@ public static class gameValues // class for the values of the game. all numbers 
             return "White";
         return "Black";
     }
+
+    public static Direction[] Directions()
+    {
+        Direction MovingDir = new Direction(1, 1);
+        Direction MovingDir2 = new Direction(-1, 1);
+        Direction MovingDir3 = new Direction(1, -1);
+        Direction MovingDir4 = new Direction(-1, -1);
+        Direction[] directions = new Direction[4] { MovingDir, MovingDir2, MovingDir3, MovingDir4 };
+        return directions;
+
+    }
+}
+public class Direction
+{
+    public int x;
+    public int z;
+    public Direction(int x, int z)
+    {
+        this.x = x;
+        this.z = z;
+    }
+    public int X()
+    { return x; }
+    public int Z()
+    { return z; }
 }
 public class Checker
 {
@@ -55,7 +79,7 @@ public class Checker
     }
     public void destroy()
     {
-        if(gameObject!=null)
+        if (gameObject != null)
             Object.Destroy(gameObject);
     }
     public int GetColor()
@@ -161,6 +185,26 @@ public class Board
         turn = gameValues.whiteChecker();
         takingTurn = false;
     }
+    public bool DefendedSqueare(int index_x, int index_z, int Defending_Color)
+    {
+        bool defended = false;
+        Direction[] directions = gameValues.Directions();
+        for (int i = 0; i < directions.Length; i++)
+        {
+            try
+            {
+                if (BoardTiles[index_x + directions[i].X(), index_z + directions[i].X()].getChecker().GetColor() == Defending_Color)
+                    defended = true;
+            }
+            catch (System.IndexOutOfRangeException e)
+            {
+                return false;
+            }
+        }
+        return defended;
+
+
+    }
     public BoardTile[,] GetBoardTiles()
     { return BoardTiles; }
     public void SetBoardTile(BoardTile BoardTile, int i, int j)
@@ -241,7 +285,7 @@ public class Board
                     BoardTiles[i, j].DestroyPiece();
                     destroyed = true;
                 }
-                    
+
             }
         }
         return destroyed;
@@ -288,7 +332,7 @@ public class CheckerGeneration : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-     
+
     }
     public void BuildBoard()
     {
@@ -301,7 +345,7 @@ public class CheckerGeneration : MonoBehaviour
             countercols = 0;
             for (float j = 4.5f; j >= -4.5f; j--)
             {
-                BoardTiles[counterrows, countercols] = new BoardTile(new Vector3(j, 8.5f, i), null,counterrows,countercols);
+                BoardTiles[counterrows, countercols] = new BoardTile(new Vector3(j, 8.5f, i), null, counterrows, countercols);
                 countercols++;
             }
             counterrows++;
@@ -402,9 +446,9 @@ public class CheckerGeneration : MonoBehaviour
         {
             temp = gameBoard.GetBoardTiles()[index_x, index_z].getChecker();
         }
-        catch   
+        catch
         {
-            temp = new Checker(MynewObject,index_x == 0 ? gameValues.whiteChecker() : gameValues.blackChecker());
+            temp = new Checker(MynewObject, index_x == 0 ? gameValues.whiteChecker() : gameValues.blackChecker());
         }
         gameBoard.destroyPiece(index_x, index_z);
         if (gameValues.isWhitePease(temp))

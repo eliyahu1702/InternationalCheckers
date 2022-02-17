@@ -194,13 +194,13 @@ public class ComputerPlayer : MonoBehaviour
                 {
                     if (checker.GetColor() == side)
                     {
-                        material_count += gameValues.isChecker(checker) ? 1.3 : 5.6;
+                        material_count += gameValues.isChecker(checker) ? 1 : 5;
                         if (UndefendenAttackedChecker(gameBoard, i, j))
                         {
-                            undefended_checkers++;
+                            undefended_checkers+= checker.GetType() == typeof(Queen) ? 4 : 1.2;
                         }
                         centralized_checkers += CentralizedChecker(gameBoard, i, j);
-
+                        
                     }
 
                 }
@@ -210,9 +210,51 @@ public class ComputerPlayer : MonoBehaviour
                 }
             }
         }
-
-        undefended_checkers *= tempo ? 0.05 : 0.3;
-        return material_count - undefended_checkers + centralized_checkers + undefendedBackRow(gameBoard, side);
+        undefended_checkers *= tempo ? 0 : 0.8;
+        double closeToPromotion = CloseToPromotion(gameBoard, side);
+        //Debug.Log("promoting checkers :"+closeToPromotion);
+        return material_count - undefended_checkers + centralized_checkers + undefendedBackRow(gameBoard, side) + closeToPromotion;
+    }
+    public double CloseToPromotion(Board gameBoard, int side)
+    {
+        double QueenEval = 0;
+        if (side == gameValues.WhiteTurn())
+        {
+            for (int i = 7; i < 10; i++)
+            {
+                for (int j = 0; j < 10; j++)
+                    try
+                    {
+                        if (gameBoard.GetBoardTiles()[i, j].getChecker().GetType() != typeof(Queen) && gameBoard.GetBoardTiles()[i, j].getChecker().GetColor() == side)
+                        {
+                            QueenEval += ((i - 6.5) * 1.2) * (UnblockedPathTOPromotion(gameBoard, gameValues.WhiteTurn(), i, j) ? 1 : 0);
+                        }
+                    }
+                    catch
+                    {
+                        // no checker
+                    }
+            }
+        }
+        else
+        {
+            for (int i = 2; i > 0; i--)
+            {
+                for (int j = 0; j < 10; j++)
+                    try
+                    {
+                        if (gameBoard.GetBoardTiles()[i, j].getChecker().GetType() != typeof(Queen) && gameBoard.GetBoardTiles()[i, j].getChecker().GetColor() == side)
+                        {
+                            QueenEval += ((i - 6.5) * 1.2) * (UnblockedPathTOPromotion(gameBoard, gameValues.BlackTurn(), i, j) ? 1 : 0);
+                        }
+                    }
+                    catch
+                    {
+                        // no checker
+                    }
+            }
+        }
+        return QueenEval;
     }
     private bool UndefendenAttackedChecker(Board gameBoard, int index_x, int index_z)
     {
@@ -328,34 +370,79 @@ public class ComputerPlayer : MonoBehaviour
     }
     private double CentralizedChecker(Board gameBoard, int index_x, int index_z)
     {
+        double DefenceEval = 0.12;
         double eval = 0;
         if (index_x == 4 || index_x == 5)
         {
             try
             {
                 if (gameBoard.GetBoardTiles()[index_x - 1, index_z - 1].getChecker().GetColor() == gameBoard.GetBoardTiles()[index_x, index_z].getChecker().GetColor())
-                    eval += 0.2;
+                    eval += DefenceEval;
                 if (gameBoard.GetBoardTiles()[index_x + 1, index_z + 1].getChecker().GetColor() == gameBoard.GetBoardTiles()[index_x, index_z].getChecker().GetColor())
-                    eval += 0.2;
+                    eval += DefenceEval;
                 if (gameBoard.GetBoardTiles()[index_x + 1, index_z - 1].getChecker().GetColor() == gameBoard.GetBoardTiles()[index_x, index_z].getChecker().GetColor())
-                    eval += 0.2;
+                    eval += DefenceEval;
                 if (gameBoard.GetBoardTiles()[index_x - 1, index_z + 1].getChecker().GetColor() == gameBoard.GetBoardTiles()[index_x, index_z].getChecker().GetColor())
-                    eval += 0.2;
+                    eval += DefenceEval;
             }
             catch
             {
-                eval += 0.1;
+                //
             }
             if (index_z >= 4 && index_z <= 6)
                 eval += 0.1;
-            eval += 0.2;
+            eval += 0.05;
         }
-        return 0;
+        return eval;
     }
-    //private double closeToPromotion(Board gameBoard, int side)
-    //{
-    //    if(side = )
-    //}
+    private bool UnblockedPathTOPromotion(Board gameBoard, int side,int index_x, int index_z)
+    {
+        bool result = false;
+        if (side == gameValues.WhiteTurn())
+        {
+            if (index_x == 9)
+                return true;
+            try
+            {
+                if (!gameBoard.DefendedSqueare(index_x,index_z,gameValues.blackChecker()))
+                    return false;
+                else
+                    result = UnblockedPathTOPromotion(gameBoard, side, index_x + 1, index_z + 1) || UnblockedPathTOPromotion(gameBoard, side, index_x + 1, index_z - 1);
+            }
+            catch
+            {
+                if (index_x >= 9)
+                    result = true;
+                else
+                {
+                    result = UnblockedPathTOPromotion(gameBoard, side, index_x + 1, index_z + 1) || UnblockedPathTOPromotion(gameBoard, side, index_x + 1, index_z - 1);
+                }
+            }
+        }
+        else
+        {
+            if (index_x == 0)
+                return true;
+            try
+            {
+                if (gameBoard.DefendedSqueare(index_x, index_z, gameValues.whiteChecker()))
+                    return false ;
+                else
+                    result = UnblockedPathTOPromotion(gameBoard, side, index_x -1, index_z + 1) || UnblockedPathTOPromotion(gameBoard, side, index_x - 1, index_z - 1);
+            }
+            catch
+            {
+                if (index_x <= 0)
+                    result = true;
+                else
+                {
+                    result = UnblockedPathTOPromotion(gameBoard, side, index_x - 1, index_z + 1) || UnblockedPathTOPromotion(gameBoard, side, index_x - 1, index_z - 1);
+                }
+            }
+
+        }
+        return result;
+    }
     private double undefendedBackRow(Board gameBoard, int turn)
     {
         double backRowCount = 0;
