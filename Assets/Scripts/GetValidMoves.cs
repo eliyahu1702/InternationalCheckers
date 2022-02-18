@@ -344,7 +344,6 @@ public class GetValidMoves : MonoBehaviour
         return moves;
        
     }
-    
 
     /*public Vector3[] Can_take_White(int index_x,int index_z,int counter)
     {

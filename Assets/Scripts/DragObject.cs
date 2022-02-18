@@ -188,7 +188,6 @@ public class DragObject : MonoBehaviour
                 AdditionalMoves = GetValidMoves.CanTake(gameBoard, movedChecker, index_highlight_x, index_highlight_z);
                 if (!took_pieace || AdditionalMoves.Count == 0)
                 {
-                    Debug.Log(manager.GetComponent<ComputerPlayer>().BoardEvaluation(gameBoard));
                     gameBoard.ChangeTurn();
                     if ( movable_checkers == null || movable_checkers.Count == 0)
                     {
@@ -205,7 +204,6 @@ public class DragObject : MonoBehaviour
                 transform.position = temp_location;
                 ChangeBoard.changePossition(gameBoard, index_x, index_z, index_highlight_x, index_highlight_z);
                 movedChecker = gameBoard.GetBoardTiles()[index_highlight_x, index_highlight_z].getChecker();
-                Debug.Log(manager.GetComponent<ComputerPlayer>().BoardEvaluation(gameBoard));
                 gameBoard.ChangeTurn();
                 manager.GetComponent<ComputerPlayer>().PlayRandomMove(gameBoard);
                 playMovingNoice(movedChecker);
@@ -230,7 +228,6 @@ public class DragObject : MonoBehaviour
         }
        
     }
-
     public void MoveMade(Board gameBoard,int src_x, int src_z, int dest_x, int dest_z)
     {
         Checker movedChecker = gameBoard.GetBoardTiles()[src_x, src_z].getChecker();
@@ -297,7 +294,6 @@ public class DragObject : MonoBehaviour
         {
             manager.GetComponent<GameManager>().EndGame(gameBoard.getTurn());
         }
-        Debug.Log(manager.GetComponent<ComputerPlayer>().BoardEvaluation(gameBoard));
     }
     public void MoveCheckerPosition(Board gameBoard, int src_x, int src_z, int dest_x, int dest_z)
     {
@@ -348,8 +344,16 @@ public class DragObject : MonoBehaviour
             gameBoard.GetBoardTiles()[src_x + 1, src_z + 1].SetTag(false);
             if (BackTrack(gameBoard,src_x + 2, src_z + 2, dest_x, dest_z))
             {
-                tileStack.Push(gameBoard.GetBoardTiles()[src_x + 1, src_z + 1]);
-                took = true;
+                try
+                {
+                    tileStack.Push(gameBoard.GetBoardTiles()[src_x + 1, src_z + 1]);
+                    took = true;
+                }
+                catch
+                {
+                    return true;
+                }
+                
             }       
         }
         if (GetValidMoves.InRange(src_x - 1, src_z + 1) && gameBoard.GetBoardTiles()[src_x - 1, src_z + 1].IsTagged())
@@ -357,8 +361,16 @@ public class DragObject : MonoBehaviour
             gameBoard.GetBoardTiles()[src_x - 1, src_z + 1].SetTag(false);
             if (BackTrack(gameBoard, src_x - 2, src_z + 2, dest_x, dest_z))
             {
-                tileStack.Push(gameBoard.GetBoardTiles()[src_x - 1, src_z + 1]);
-                took = true;
+                try
+                {
+                    tileStack.Push(gameBoard.GetBoardTiles()[src_x - 1, src_z + 1]);
+                    took = true;
+                }
+                catch
+                {
+                    return true;
+                }
+
             }
         }
         if (GetValidMoves.InRange(src_x - 1, src_z - 1) && gameBoard.GetBoardTiles()[src_x - 1, src_z - 1].IsTagged())
@@ -366,8 +378,15 @@ public class DragObject : MonoBehaviour
             gameBoard.GetBoardTiles()[src_x - 1, src_z - 1].SetTag(false);
             if (BackTrack(gameBoard, src_x - 2, src_z - 2, dest_x, dest_z))
             {
-                tileStack.Push(gameBoard.GetBoardTiles()[src_x - 1, src_z - 1]);
-                took = true;
+                try
+                {
+                    tileStack.Push(gameBoard.GetBoardTiles()[src_x - 1, src_z - 1]);
+                    took = true;
+                }
+                catch
+                {
+                    return true;
+                }
             }
         }
         if (GetValidMoves.InRange(src_x + 1, src_z - 1) && gameBoard.GetBoardTiles()[src_x + 1, src_z - 1].IsTagged())
@@ -375,8 +394,15 @@ public class DragObject : MonoBehaviour
             gameBoard.GetBoardTiles()[src_x + 1, src_z - 1].SetTag(false);
             if (BackTrack(gameBoard, src_x + 2, src_z - 2, dest_x, dest_z))
             {
-                tileStack.Push(gameBoard.GetBoardTiles()[src_x + 1, src_z - 1]);
-                took = true;
+                try
+                {
+                    tileStack.Push(gameBoard.GetBoardTiles()[src_x + 1, src_z - 1]);
+                    took = true;
+                }
+                catch
+                {
+                    return true;
+                }
             }
         }
         return took;

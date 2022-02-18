@@ -196,14 +196,13 @@ public class Board
                 if (BoardTiles[index_x + directions[i].X(), index_z + directions[i].X()].getChecker().GetColor() == Defending_Color)
                     defended = true;
             }
-            catch (System.IndexOutOfRangeException e)
+            catch
             {
                 return false;
             }
         }
+        Debug.Log(defended);
         return defended;
-
-
     }
     public BoardTile[,] GetBoardTiles()
     { return BoardTiles; }
