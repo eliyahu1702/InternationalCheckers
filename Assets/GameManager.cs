@@ -10,6 +10,7 @@ public class GameManager : MonoBehaviour
     public Text outcomeText;
     public bool Playing_White = true;
     public bool Playing_Ai = true;
+    public bool moveMade = false;
 
     // Update is called once per frame
     public void ExitTheGame()

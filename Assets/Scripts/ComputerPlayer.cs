@@ -1,5 +1,9 @@
 using System.Collections.Generic;
+using Unity.Collections;
+using Unity.Jobs;
+using Unity.Mathematics;
 using UnityEngine;
+
 
 public class GameMove
 {
@@ -67,14 +71,8 @@ public class ComputerPlayer : MonoBehaviour
     {
         if (!GameManager.GetComponent<GameManager>().GetPlayingAi())
             return;
-        List<Checker> checkers = GetValidMoves.MovableCheckers(gameBoard, gameBoard.getTurn());
-        if (checkers.Count <= 0)
-        {
-            GameManager.GetComponent<GameManager>().EndGame(gameBoard.getTurn());
-            return;
-        }
-
         GameMove bestMove = ComputerMove(gameBoard);
+        Debug.Log("Bot Evaluation of the current possition: " + BoardEvaluation(gameBoard));
         GameManager.GetComponent<DragObject>().MoveMade(gameBoard, bestMove.GetSrc_X(), bestMove.GetSrc_Z(), bestMove.GetTrt_X(), bestMove.GetTrt_Z());
     }
     public BoardTile findTile(Board gameBoard, Checker checker)
@@ -112,7 +110,18 @@ public class ComputerPlayer : MonoBehaviour
                 {
                     Board newBoard = CloneBoard(gameBoard);
                     SimulateMove(newBoard, tileofChecker.getX(), tileofChecker.getZ(), tile.getX(), tile.getZ());
-                    double boardEval =  Minimax(newBoard, gameValues.searchDeapth(), double.NegativeInfinity, double.PositiveInfinity, false); // BoardEvaluation(newBoard);//
+                    //NativeArray<double> resultArr = new NativeArray<double>(1,Allocator.Temp);
+                    //MinimaxJob minimaxing = new MinimaxJob {
+                    //    gameBoard = newBoard,
+                    //    deapth = gameValues.searchDeapth(),
+                    //    alpha = double.NegativeInfinity,
+                    //    beta = double.PositiveInfinity,
+                    //    maximizing_player = false,
+                    //    result = resultArr
+                    //};
+                    //JobHandle jobHandle = minimaxing.Schedule();
+                    //jobHandle.Complete();
+                    double boardEval = Minimax(newBoard, gameValues.searchDeapth(), double.NegativeInfinity, double.PositiveInfinity, false); //BoardEvaluation(newBoard);// Minimax(newBoard, gameValues.searchDeapth(), double.NegativeInfinity, double.PositiveInfinity, false);
                     if (boardEval > maxEval)
                     {
                         bestMove.UpdateMove(tileofChecker.getX(), tileofChecker.getZ(), tile.getX(), tile.getZ());
@@ -120,7 +129,7 @@ public class ComputerPlayer : MonoBehaviour
                     }
                 }
             }
-            Debug.Log("Bot Evaluation of the current possition: " + maxEval);
+
         }
         else
         {
@@ -134,7 +143,7 @@ public class ComputerPlayer : MonoBehaviour
                     count++;
                     Board newBoard = CloneBoard(gameBoard);
                     SimulateMove(newBoard, tileofChecker.getX(), tileofChecker.getZ(), tile.getX(), tile.getZ());
-                    double boardEval = Minimax(newBoard, gameValues.searchDeapth(),double.NegativeInfinity,double.PositiveInfinity, true); // BoardEvaluation(newBoard);  //               
+                    double boardEval = Minimax(newBoard, gameValues.searchDeapth(), double.NegativeInfinity, double.PositiveInfinity, true); //BoardEvaluation(newBoard);  //               
                     if (boardEval < minEval)
                     {
                         bestMove.UpdateMove(tileofChecker.getX(), tileofChecker.getZ(), tile.getX(), tile.getZ());
@@ -146,7 +155,7 @@ public class ComputerPlayer : MonoBehaviour
             Debug.Log("Bot Evaluation of the current possition: " + minEval);
         }
         GetValidMoves.Get_Valid_Moves(gameBoard, bestMove.GetSrc_X(), bestMove.GetSrc_Z());
-        
+
         return bestMove;
     }
     public void SimulateMove(Board gameBoard, int src_x, int src_z, int dest_x, int dest_z)
@@ -191,7 +200,8 @@ public class ComputerPlayer : MonoBehaviour
     {
         return Evaluate(gameBoard, gameValues.WhiteTurn()) - Evaluate(gameBoard, gameValues.BlackTurn());
     }
-    public double Minimax(Board gameBoard, int deapth,double alpha, double beta, bool maximizing_player)
+    [BurstCompatible]
+    public double Minimax(Board gameBoard, int deapth, double alpha, double beta, bool maximizing_player)
     {
         if (deapth == 0)
             return BoardEvaluation(gameBoard);
@@ -210,9 +220,9 @@ public class ComputerPlayer : MonoBehaviour
                     Board newBoard = CloneBoard(gameBoard);
                     GetValidMoves.Get_Valid_Moves(newBoard, tileofChecker.getX(), tileofChecker.getZ());
                     SimulateMove(newBoard, tileofChecker.getX(), tileofChecker.getZ(), tile.getX(), tile.getZ());
-                    eval = Minimax(newBoard, deapth - 1,alpha, beta, false);
-                    maxEval = Mathf.Max((float)eval, (float)maxEval);
-                    alpha = Mathf.Max((float)alpha, (float)eval);
+                    eval = Minimax(newBoard, deapth - 1, alpha, beta, false);
+                    maxEval = math.max(maxEval, eval);
+                    alpha = math.max(alpha, eval);
                     if (beta <= alpha)
                         break;
                 }
@@ -233,13 +243,14 @@ public class ComputerPlayer : MonoBehaviour
                     Board newBoard = CloneBoard(gameBoard);
                     GetValidMoves.Get_Valid_Moves(newBoard, tileofChecker.getX(), tileofChecker.getZ());
                     SimulateMove(newBoard, tileofChecker.getX(), tileofChecker.getZ(), tile.getX(), tile.getZ());
-                    eval = Minimax(newBoard, deapth - 1,alpha,beta ,true);
-                    minEval = Mathf.Min((float)eval, (float)minEval);
-                    beta = Mathf.Min((float)beta, (float)eval);
+                    eval = Minimax(newBoard, deapth - 1, alpha, beta, true);
+                    minEval = math.min(minEval, eval);
+                    //beta = Mathf.Min((float)beta, (float)eval);
+                    beta = math.min(beta, eval);
                     if (beta <= alpha)
                         break;
                 }
-                
+
             }
             return minEval;
         }
@@ -250,9 +261,11 @@ public class ComputerPlayer : MonoBehaviour
         BoardTile[,] Tiles = gameBoard.GetBoardTiles();
         if (gameBoard.getTurn() == side)
             tempo = true;
-        double material_count = 0;
+        double checker_count = 0;
+        double queen_count = 0;
         double undefended_checkers = 0;
         double centralized_checkers = 0;
+        double bias = 0;
         for (int i = 0; i < 10; i++)
         {
             for (int j = 0; j < 10; j++)
@@ -262,14 +275,17 @@ public class ComputerPlayer : MonoBehaviour
                 {
                     if (checker.GetColor() == side)
                     {
-                        material_count += gameValues.isChecker(checker) ? 1 : 5;
+                        if (gameValues.isChecker(checker))
+                            checker_count++;
+                        else
+                            queen_count++;
                         if (UndefendenAttackedChecker(gameBoard, i, j))
                         {
-                            undefended_checkers += checker.GetType() == typeof(Queen) ? 5 : 2;
+                            undefended_checkers += checker.GetType() == typeof(Queen) ? 6 : 1;
                             if (!tempo)
-                                undefended_checkers *= 1.1;
+                                undefended_checkers *= 1.2;
                         }
-                        centralized_checkers += CentralizedChecker(gameBoard,side, i, j);
+                        centralized_checkers += CentralizedChecker(gameBoard, side, i, j);
                     }
 
                 }
@@ -279,9 +295,12 @@ public class ComputerPlayer : MonoBehaviour
                 }
             }
         }
-        //double closeToPromotion = CloseToPromotion(gameBoard, side);
+        double closeToPromotion = CloseToPromotion(gameBoard, side);
         //Debug.Log("promoting checkers :"+closeToPromotion);
-        return material_count - undefended_checkers + centralized_checkers + undefendedBackRow(gameBoard, side); //+ closeToPromotion;
+        if (checker_count + queen_count == 0)
+            return double.NegativeInfinity;
+        bias -= 20 / checker_count;
+        return checker_count + (queen_count * 6) - undefended_checkers + centralized_checkers + undefendedBackRow(gameBoard, side) + bias;/* + closeToPromotion;*/
     }
     public double StructuredCenter(Board gameBoard, int side)
     {
@@ -525,27 +544,41 @@ public class ComputerPlayer : MonoBehaviour
 
         return underAttack;
     }
-    private double CentralizedChecker(Board gameBoard,int side ,int index_x, int index_z)
+    private double CentralizedChecker(Board gameBoard, int side, int index_x, int index_z)
     {
         double eval = 0;
-
         if (side == gameValues.WhiteTurn())
         {
-            if(index_x == 4)
-            eval += 0.03;
+            if (index_x == 4)
+            {
+                eval += 0.03;
+                if (index_z >= 3 && index_z <= 7)
+                    eval += 0.1;
+            }
+
             if (index_x >= 5)
+            {
                 eval += 0.04;
-            if (index_z >= 4 && index_z <= 6)
-                eval += 0.1;
+                if (index_z >= 3 && index_z <= 7)
+                    eval += 0.1;
+            }
         }
-        else 
+        else
         {
             if (index_x == 5)
+            {
                 eval += 0.03;
+                if (index_z >= 3 && index_z <= 7)
+                    eval += 0.1;
+            }
+
             if (index_x <= 4)
+            {
                 eval += 0.04;
-            if (index_z >= 3 && index_z <= 7)
-                eval += 0.1;
+                if (index_z >= 3 && index_z <= 7)
+                    eval += 0.1;
+            }
+
         }
         return eval;
     }
@@ -632,7 +665,7 @@ public class ComputerPlayer : MonoBehaviour
         }
         return backRowCount;
     }
-    private Board CloneBoard(Board gameBoard)
+    public Board CloneBoard(Board gameBoard)
     {
         Board newBoard = null;
         BoardTile[,]

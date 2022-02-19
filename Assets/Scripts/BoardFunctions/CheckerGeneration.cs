@@ -2,7 +2,7 @@ using UnityEngine;
 public static class gameValues // class for the values of the game. all numbers are here 
 {
     public static int searchDeapth()
-    { return 3; }
+    { return 4; }
     public static int WhiteTurn() { return 1; }
     public static int BlackTurn() { return 2; }
     public static int whiteChecker() { return 1; }
@@ -421,7 +421,8 @@ public class CheckerGeneration : MonoBehaviour
         GameObject manager = GameObject.Find("Game_Manager");
         if (manager.GetComponent<GameManager>().GetPlayingAi() && !manager.GetComponent<GameManager>().GetPlayingWhite())
         {
-            manager.GetComponent<ComputerPlayer>().PlayRandomMove(gameBoard);
+            manager.GetComponent<GameManager>().moveMade = true;
+            //manager.GetComponent<ComputerPlayer>().PlayRandomMove(gameBoard);
         }
     }
     public void CascadeBoard()

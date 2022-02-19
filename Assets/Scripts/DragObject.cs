@@ -1,12 +1,13 @@
 
 using System.Collections.Generic;
-
+using System.Threading;
 using UnityEngine;
 
 
 
 public class DragObject : MonoBehaviour
 {
+    public Checker Tempchecker;
     public AudioSource TakingSound;
     public Board gameBoard;
     private Vector3 mOffset;
@@ -25,6 +26,7 @@ public class DragObject : MonoBehaviour
         [SerializeField] private List<AudioClip> audioClips;
     void Start()
     {
+        Tempchecker = new Checker(null, 1);
         GameObject board = GameObject.Find("Board");
         gameBoard = board.GetComponent<CheckerGeneration>().gameBoard;
         tileStack = new Stack<BoardTile>();
@@ -64,7 +66,20 @@ public class DragObject : MonoBehaviour
                 Highlight = Board.GetComponent<ObjectPooling>().GetPooledObjects();
             }
     }
-    
+    public void Update()
+    {
+        if (manager.GetComponent<GameManager>().Playing_Ai && manager.GetComponent<GameManager>().moveMade == true && Time.frameCount % 30 == 0)
+        {
+            ComputerMove();
+            Debug.Log("Calculating");
+                //manager.GetComponent<ComputerPlayer>().PlayRandomMove(GameObject.Find("Board").GetComponent<CheckerGeneration>().gameBoard);
+                //playMovingNoice(Tempchecker);
+                //manager.GetComponent<GameManager>().moveMade = false;
+           // }).Start();
+            
+            
+        }
+    }
 
     private void OnTriggerEnter(Collider other)
     {
@@ -189,12 +204,12 @@ public class DragObject : MonoBehaviour
                 if (!took_pieace || AdditionalMoves.Count == 0)
                 {
                     gameBoard.ChangeTurn();
-                    if ( movable_checkers == null || movable_checkers.Count == 0)
+                    if (movable_checkers == null || movable_checkers.Count == 0)
                     {
                         manager.GetComponent<GameManager>().EndGame(gameBoard.getTurn());
                     }
                     else
-                        manager.GetComponent<ComputerPlayer>().PlayRandomMove(gameBoard);
+                        manager.GetComponent<GameManager>().moveMade = true;
                 }
                     
                 //Debug.Log("White Material count = " + gameBoard.getWhiteCheckerCount() + " Black material count = " + gameBoard.getBlackCheckerCount());
@@ -205,9 +220,8 @@ public class DragObject : MonoBehaviour
                 ChangeBoard.changePossition(gameBoard, index_x, index_z, index_highlight_x, index_highlight_z);
                 movedChecker = gameBoard.GetBoardTiles()[index_highlight_x, index_highlight_z].getChecker();
                 gameBoard.ChangeTurn();
-                manager.GetComponent<ComputerPlayer>().PlayRandomMove(gameBoard);
                 playMovingNoice(movedChecker);
-
+                manager.GetComponent<GameManager>().moveMade = true;
             }
             gameBoard.untagAll();
             
@@ -253,6 +267,7 @@ public class DragObject : MonoBehaviour
             if (!took_pieace || AdditionalMoves.Count == 0)
             {
                 gameBoard.ChangeTurn();
+                manager.GetComponent<GameManager>().moveMade = false;
                 movable_checkers = GetValidMoves.MovableCheckers(gameBoard, gameBoard.getTurn());
                 if (movable_checkers == null || movable_checkers.Count == 0)
                 {
@@ -280,6 +295,7 @@ public class DragObject : MonoBehaviour
             ChangeBoard.changePossition(gameBoard, src_x, src_z, dest_x, dest_z);
             movedChecker = gameBoard.GetBoardTiles()[dest_x, dest_z].getChecker();
             gameBoard.ChangeTurn();
+            manager.GetComponent<GameManager>().moveMade = false;
             movable_checkers = GetValidMoves.MovableCheckers(gameBoard, gameBoard.getTurn());
             playMovingNoice(movedChecker);
 
@@ -311,15 +327,22 @@ public class DragObject : MonoBehaviour
     private void playMovingNoice(Checker c)
     {
         GameObject Board = GameObject.Find("Board");
-         
-        if (c.GetType() == typeof(Checker))
+        try
         {
-            Board.GetComponent<playGameSounds>().playCheckerMove(c);
+            if (c.GetType() == typeof(Checker))
+            {
+                Board.GetComponent<playGameSounds>().playCheckerMove(c);
+            }
+            else
+            {
+                Board.GetComponent<playGameSounds>().playQueenMove();
+            }
         }
-        else
+        catch
         {
-            Board.GetComponent<playGameSounds>().playQueenMove();
+            Board.GetComponent<playGameSounds>().playCheckerMove(Tempchecker);
         }
+
             
     }
     private void playTakingNoice()
@@ -415,5 +438,13 @@ public class DragObject : MonoBehaviour
             //Debug.Log(tile.getX() +" "+ tile.getZ());
             tileStack.Pop().SetTag(true);
         }
+    }
+
+    public void ComputerMove()
+    {
+        manager.GetComponent<ComputerPlayer>().PlayRandomMove(GameObject.Find("Board").GetComponent<CheckerGeneration>().gameBoard);
+        playMovingNoice(Tempchecker);
+        manager.GetComponent<GameManager>().moveMade = false;
+
     }
 }
