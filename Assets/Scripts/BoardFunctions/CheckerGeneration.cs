@@ -2,7 +2,7 @@ using UnityEngine;
 public static class gameValues // class for the values of the game. all numbers are here 
 {
     public static int searchDeapth()
-    { return 4; }
+    { return 6; }
     public static int WhiteTurn() { return 1; }
     public static int BlackTurn() { return 2; }
     public static int whiteChecker() { return 1; }
@@ -21,7 +21,7 @@ public static class gameValues // class for the values of the game. all numbers 
     public static int InnitialEvaluation() { return 0; }
     public static bool isWhitePease(Checker checker) { return checker.GetValue() % 2 == 1; }
     public static bool isChecker(Checker checker)
-    { return checker.GetValue() <= gameValues.blackChecker(); }
+    { return checker!= null && checker.GetValue() <= gameValues.blackChecker(); }
     public static bool isQueen(Checker checker)
     { return checker.GetValue() >= gameValues.WhiteQueen(); }
     public static string nameByTurn(int turn)
@@ -156,8 +156,8 @@ public class BoardTile
             checker.destroy();
         }
         checker = null;
-
     }
+
 
     public bool IsTagged()
     { return Tagged; }
@@ -201,7 +201,6 @@ public class Board
                 return false;
             }
         }
-        Debug.Log(defended);
         return defended;
     }
     public BoardTile[,] GetBoardTiles()
@@ -468,6 +467,50 @@ public class CheckerGeneration : MonoBehaviour
             queen = new Queen(MynewObject, gameValues.BlackQueen());
             gameBoard.GetBoardTiles()[index_x, index_z].setChecker(queen);
         }
+    }
+    public void SetPiece(Board gameBoard,int index_x,int index_z,int Value)
+    {
+        Checker newChecker;
+        GameObject MynewObject = new GameObject();
+        switch (Value)
+        {
+            case 1:
+                MynewObject = Instantiate(draught, gameBoard.GetBoardTiles()[index_x, index_z].getBoardPossition(), spawningpos.rotation) as GameObject;
+                MynewObject.GetComponent<MeshRenderer>().material.color = Color.white;
+                MynewObject.transform.localPosition = gameBoard.GetBoardTiles()[index_x,index_z].getBoardPossition();
+                MynewObject.tag = "White_Checker";
+                newChecker = new Checker(MynewObject, gameValues.whiteChecker());
+                gameBoard.GetBoardTiles()[index_x, index_z].setChecker(newChecker);
+                break;
+
+            case 2:
+                MynewObject = Instantiate(draught, gameBoard.GetBoardTiles()[index_x, index_z].getBoardPossition(), spawningpos.rotation) as GameObject;
+                MynewObject.GetComponent<MeshRenderer>().material.color = Color.red;
+                MynewObject.transform.localPosition = gameBoard.GetBoardTiles()[index_x, index_z].getBoardPossition();
+                MynewObject.tag = "Black_Checker";
+                newChecker = new Checker(MynewObject, gameValues.blackChecker());
+                gameBoard.GetBoardTiles()[index_x, index_z].setChecker(newChecker);
+                break;
+            case 3:
+                MynewObject = Instantiate(gameBoard.getQueen(), gameBoard.GetBoardTiles()[index_x, index_z].getBoardPossition(), gameBoard.getQueenTransform().rotation);
+                MynewObject.GetComponent<MeshRenderer>().material.color = Color.white;
+                MynewObject.tag = "White_Queen";
+                newChecker = new Queen(MynewObject, gameValues.WhiteQueen());
+                gameBoard.GetBoardTiles()[index_x, index_z].setChecker(newChecker);
+                break;
+            case 4:
+                MynewObject = Instantiate(gameBoard.getQueen(), gameBoard.GetBoardTiles()[index_x, index_z].getBoardPossition(), gameBoard.getQueenTransform().rotation);
+                MynewObject.GetComponent<MeshRenderer>().material.color = Color.red;
+                MynewObject.tag = "Black_Queen";
+                newChecker = new Queen(MynewObject, gameValues.BlackQueen());
+                gameBoard.GetBoardTiles()[index_x, index_z].setChecker(newChecker);
+                break;
+            default:
+                gameBoard.GetBoardTiles()[index_x,index_z].DestroyPiece();
+                break;
+
+        }
+
     }
     public Board GetBoard()
     { return gameBoard; }

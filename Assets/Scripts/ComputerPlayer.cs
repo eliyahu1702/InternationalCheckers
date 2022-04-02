@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using Unity.Collections;
-using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
 
@@ -67,689 +66,332 @@ public class ComputerPlayer : MonoBehaviour
     {
 
     }
-    public void PlayRandomMove(Board gameBoard)
+    public void PlayComputerMove(Board gameBoard)
     {
         if (!GameManager.GetComponent<GameManager>().GetPlayingAi())
             return;
-        GameMove bestMove = ComputerMove(gameBoard);
-        Debug.Log("Bot Evaluation of the current possition: " + BoardEvaluation(gameBoard));
-        GameManager.GetComponent<DragObject>().MoveMade(gameBoard, bestMove.GetSrc_X(), bestMove.GetSrc_Z(), bestMove.GetTrt_X(), bestMove.GetTrt_Z());
-    }
-    public BoardTile findTile(Board gameBoard, Checker checker)
+        gameBoard.setTurn(GameManager.GetComponent<GameManager>().Playing_White ? 2 : 1);
+        int[,] bestMove = Pick_Logic_Move(TranslateBoard(gameBoard),gameBoard.getTurn());
+        Logic_To_Display(gameBoard, bestMove);
+        gameBoard.ChangeTurn();
+        List<int[,]> PossibleResponses = validMoves(bestMove, gameBoard.getTurn());
+        if (PossibleResponses == null || PossibleResponses.Count == 0)
+        {
+            GameManager.GetComponent<GameManager>().EndGame(gameBoard.getTurn());
+        }
+    }// function called after the human player completes a move, plays the best move according to the computer
+    public void Logic_To_Display(Board gameBoard, int[,] logic_board) // translates logics board to display board
     {
+        for (int i = 0; i < 10; i++)
+        {
+            for (int j = i%2; j < 10; j+=2)
+            {
+                if (gameBoard.GetBoardTiles()[i, j].getChecker() != null)
+                {
+                    gameBoard.GetBoardTiles()[i, j].DestroyPiece();
+                }
+                GameObject.Find("Board").GetComponent<CheckerGeneration>().SetPiece(gameBoard,i,j,logic_board[i,j]);
+            }
+        }
+    }
+    public int[,] TranslateBoard(Board gameBoard)
+    {
+        int[,] result = new int[10,10];
         for (int i = 0; i < 10; i++)
         {
             for (int j = 0; j < 10; j++)
             {
-                if (gameBoard.GetBoardTiles()[i, j].getChecker() == checker)
-                    return gameBoard.GetBoardTiles()[i, j];
+                try
+                {
+                    result[i, j] = gameBoard.GetBoardTiles()[i, j].getChecker().GetValue();
+                }
+                catch
+                {
+                    result[i, j] = 0;
+                }
+
             }
         }
-        return null;
-    }
-    public GameMove ComputerMove(Board gameBoard)
+        return result;
+    } // parses the grafical board for the computer player
+    public List<int[,]> validMoves(int[,] logic_board, int turn)
     {
-        int count = 0;
-        GameMove bestMove = new GameMove();
+        List<int[,]> taking_moves = new List<int[,]>();
+        List<int[,]> walking_moves = new List<int[,]>();
+        bool has_to_take = false;
+        for (int i = 0; i < 10; i++)
+        {
+            for (int j = i % 2; j < 10; j += 2)
+            {
+                if (logic_board[i, j] != 0 && logic_board[i, j] % 2 == turn % 2)
+                {
+                    List<int[,]> tempMoves = canTakeLogic(logic_board, i, j);
+                    if (tempMoves.Count > 0)
+                    {
+                        has_to_take = true;
+                        taking_moves.AddRange(tempMoves);
+                    }
+                    if (!has_to_take)
+                    {
+                        tempMoves = MovementLogic(logic_board, i, j);
+                        walking_moves.AddRange(tempMoves);
+                    }
+
+                }
+
+            }
+        }
+        return has_to_take ? taking_moves : walking_moves;
+    } // find all the valid moves for one side, returns a list of boards
+    public List<int[,]> canTakeLogic(int[,] logic_board, int index_x, int index_z)
+    {
+        if (logic_board[index_x, index_z] > 2)
+            return CanTakeQueenLogic(logic_board, index_x, index_z);
+        int pieceValue = logic_board[index_x, index_z];
+        List<int[,]> moves = new List<int[,]>();
+        int[,] directions = new int[4, 2] { { 1, 1 }, { 1, -1 }, { -1, -1 }, { -1, 1 } };
+        for (int rep = 0; rep < 4; rep++)
+        {
+            int[,] temp_move = (int[,])logic_board.Clone();
+            try
+            {
+                if (temp_move[index_x + directions[rep, 0], index_z + directions[rep, 1]] > 0 && temp_move[index_x + directions[rep, 0], index_z + directions[rep, 1]] %2 != temp_move[index_x, index_z] %2)
+                {
+                    if (temp_move[index_x + directions[rep, 0] * 2, index_z + directions[rep, 1] * 2] <= 0)
+                    {
+                        temp_move[index_x,index_z] = temp_move[index_x + directions[rep, 0], index_z + directions[rep, 1]] = 0; // tagging the checker for recursion
+                        temp_move[index_x + directions[rep, 0] * 2, index_z + directions[rep, 1] * 2] = pieceValue;
+                        List<int[,]> AditionalMoves = canTakeLogic(temp_move, index_x + directions[rep, 0] * 2, index_z + directions[rep, 1] * 2);
+                        if (AditionalMoves.Count == 0)
+                        {
+                            if ((pieceValue == gameValues.whiteChecker() && (index_x + directions[rep, 0] * 2 == 9)) || (pieceValue == gameValues.blackChecker() && (index_x + directions[rep, 0] * 2 == 0)))
+                                temp_move[index_x + directions[rep, 0] * 2, index_z + directions[rep, 1] * 2] = pieceValue + 2; // qeening the piece
+                            moves.Add(temp_move);
+                        }
+                        else
+                            moves = AditionalMoves;
+                    }
+                }
+            }
+            catch
+            {
+                //piece on edge of the screen
+            }
+        }
+        return moves;
+    }// returns the possible boards for a piece taking another
+    public List<int[,]> MovementLogic(int[,] logic_board, int index_x, int index_z)
+    {
+        int i;
+        int pieceValue = logic_board[index_x, index_z];
+        if (pieceValue > 2)
+            return MovementLogicQueen(logic_board, index_x, index_z);
+        List<int[,]> moves = new List<int[,]>();
+        int[,] directions = new int[4, 2] { { 1, 1 }, { 1, -1 }, { -1, -1 }, { -1, 1 } };
+        if (pieceValue == gameValues.whiteChecker())
+            i = 2;
+        else
+            i = 4;
+        for (int j = i - 2; j < i; j++)
+        {
+            int[,] newBoard = (int[,])logic_board.Clone();
+            int new_X_Index = index_x + directions[j, 0];
+            int new_Z_Index = index_z + directions[j, 1];
+            try
+            {
+                if (newBoard[new_X_Index, new_Z_Index] <= 0)
+                {
+                    newBoard[new_X_Index, new_Z_Index] = pieceValue;
+                    newBoard[index_x, index_z] = 0;
+                    if ((pieceValue == gameValues.whiteChecker() && (new_X_Index == 9)) || (pieceValue == gameValues.blackChecker() && (new_X_Index == 0)))
+                        newBoard[new_X_Index, new_Z_Index] = pieceValue + 2; // qeening the piece
+                    moves.Add(newBoard);
+                }
+            }
+            catch { }//no directions 
+        }
+        return moves;
+    }// returns the possible boards for a piece moving
+    public List<int[,]> MovementLogicQueen(int[,] logic_board, int index_x, int index_z)
+    {
+        List<int[,]> moves = new List<int[,]>();
+        int[,] directions = new int[4, 2] { { 1, 1 }, { 1, -1 }, { -1, -1 }, { -1, 1 } };
+        int peiceValue = logic_board[index_x, index_z];
+        for (int i = 0; i < 4; i++)
+        {
+            
+            int temp_x = index_x + directions[i, 0];
+            int temp_z = index_z + directions[i, 1];
+            try
+            {
+                while (logic_board[temp_x, temp_z] == 0)
+                {
+                    int[,] newBoard = (int[,])logic_board.Clone();
+                    newBoard[temp_x, temp_z] = peiceValue;
+                    newBoard[index_x, index_z] = 0;
+                    moves.Add(newBoard);
+                    temp_x += directions[i, 0];
+                    temp_z += directions[i, 1];
+                }
+            }
+            catch { };
+        }
+        return moves;
+    }// movement logic for the queen
+    public List<int[,]> CanTakeQueenLogic(int[,] logic_board, int index_x, int index_z)
+    {
+        int peiceValue = logic_board[index_x, index_z];
+        List<int[,]> moves = new List<int[,]>();
+        int[,] directions = new int[4, 2] { { 1, 1 }, { 1, -1 }, { -1, -1 }, { -1, 1 } };
+        for (int i = 0; i < 4; i++)
+        {
+            int temp_x = index_x + directions[i, 0];
+            int temp_z = index_z + directions[i, 1];
+            try
+            {
+                while (logic_board[temp_x, temp_z] == 0 )
+                {
+                    temp_x += directions[i, 0];
+                    temp_z += directions[i, 1];
+                }
+
+                if (logic_board[temp_x, temp_z] % 2 != peiceValue % 2 && logic_board[temp_x + directions[i, 0], temp_z + directions[i, 1]] == 0)
+                {
+                       
+                    int[,] tempMove = (int[,])logic_board.Clone();
+                    tempMove[index_x, index_z] = 0;
+                    tempMove[temp_x, temp_z] = 0; // tagging the checker for recursion
+                    tempMove[temp_x + directions[i, 0], temp_z + directions[i, 1]] = peiceValue;
+                    List<int[,]> AditionalMoves = CanTakeQueenLogic(tempMove, temp_x + directions[i, 0], temp_z + directions[i, 1]);
+                    if (AditionalMoves.Count == 0)
+                    {
+                        moves.Add(tempMove);
+                    }
+                    else
+                        moves.AddRange(AditionalMoves);
+                    temp_x += directions[i, 0];
+                    temp_z += directions[i, 1];
+                    int extra_move_x = temp_x + directions[i, 0];
+                    int extra_move_z = temp_z + directions[i, 1];
+                    while (tempMove[extra_move_x, extra_move_z] == 0)
+                    {
+                        int[,] cont = (int[,])tempMove.Clone();
+                        cont[temp_x, temp_z] = peiceValue;
+                        cont[temp_x + directions[i, 0], temp_z + directions[i, 1]] = 0;
+                        moves.Add(cont);
+                        extra_move_x+=directions[i, 0];
+                        extra_move_z+=directions[i, 1]; 
+                    }
+                }
+
+            
+            }
+            catch
+            {
+                //piece on edge of the screen
+            }
+        }
+        return moves;
+    }// capturing logic for the queen
+    public double Evaluate_Logic(int[,] logic_board, int side)
+    {
+        double TotalEval, QueenCount, CheckerCount, CentralizedCheckers, AttackedCheckers;
+        TotalEval = QueenCount = CheckerCount = CentralizedCheckers = AttackedCheckers = 0;
+        for (int i = 0; i < 10; i++)
+        {
+            for (int j = i % 2; j < 10; j++)
+            {
+                if (logic_board[i, j] != 0 && logic_board[i, j] % 2 == side % 2)
+                {
+                    if (logic_board[i, j] < 3)
+                        CheckerCount++;
+                    else
+                        QueenCount++;
+                }
+
+            }
+        }
+        TotalEval = CheckerCount + QueenCount * 6;
+        return TotalEval;
+    }// function  that evaluates the board for one side
+    public double Logic_Board_Evalution(int[,] logic_Board)
+    {
+        return Evaluate_Logic(logic_Board, 1) - Evaluate_Logic(logic_Board, 2);
+    }// returns the evaluation of one side subtracted by another, positive for white winning, negetive for black, 0 for a draw
+    public int[,] Pick_Logic_Move(int[,] logic_Board, int side)
+    {
+        int[,] bestMove = null;
         if (!GameManager.GetComponent<GameManager>().GetPlayingAi())
             return null;
-        List<Checker> checkers = GetValidMoves.MovableCheckers(gameBoard, gameBoard.getTurn());
-        if (checkers.Count <= 0)
+        List<int[,]> allMoves = validMoves(logic_Board, side);
+        if (allMoves.Count <= 0)
         {
-            GameManager.GetComponent<GameManager>().EndGame(gameBoard.getTurn());
+            GameManager.GetComponent<GameManager>().EndGame(side);
             return null;
         }
-        if (gameBoard.getTurn() == gameValues.WhiteTurn())
+        if (side == 1)
         {
-            double maxEval = double.NegativeInfinity;
-            foreach (Checker SelecteChecker in checkers)
+            double MaxEval = double.NegativeInfinity;
+            foreach (int[,] move in allMoves)
             {
-                BoardTile tileofChecker = findTile(gameBoard, SelecteChecker);
-                List<BoardTile> PossibleCheckerMoves = GetValidMoves.Get_Valid_Moves(gameBoard, tileofChecker.getX(), tileofChecker.getZ());
-                foreach (BoardTile tile in PossibleCheckerMoves)
+                double MoveEval = Minimax(move, gameValues.searchDeapth(), double.NegativeInfinity, double.PositiveInfinity, false);
+                if (MaxEval < MoveEval)
                 {
-                    Board newBoard = CloneBoard(gameBoard);
-                    SimulateMove(newBoard, tileofChecker.getX(), tileofChecker.getZ(), tile.getX(), tile.getZ());
-                    //NativeArray<double> resultArr = new NativeArray<double>(1,Allocator.Temp);
-                    //MinimaxJob minimaxing = new MinimaxJob {
-                    //    gameBoard = newBoard,
-                    //    deapth = gameValues.searchDeapth(),
-                    //    alpha = double.NegativeInfinity,
-                    //    beta = double.PositiveInfinity,
-                    //    maximizing_player = false,
-                    //    result = resultArr
-                    //};
-                    //JobHandle jobHandle = minimaxing.Schedule();
-                    //jobHandle.Complete();
-                    double boardEval = Minimax(newBoard, gameValues.searchDeapth(), double.NegativeInfinity, double.PositiveInfinity, false); //BoardEvaluation(newBoard);// Minimax(newBoard, gameValues.searchDeapth(), double.NegativeInfinity, double.PositiveInfinity, false);
-                    if (boardEval > maxEval)
-                    {
-                        bestMove.UpdateMove(tileofChecker.getX(), tileofChecker.getZ(), tile.getX(), tile.getZ());
-                        maxEval = boardEval;
-                    }
+                    bestMove = move;
+                    MaxEval = MoveEval;
                 }
             }
-
+            return bestMove;
         }
         else
         {
-            double minEval = double.PositiveInfinity;
-            foreach (Checker SelecteChecker in checkers)
+            double MinEval = double.PositiveInfinity;
+            foreach (int[,] move in allMoves)
             {
-                BoardTile tileofChecker = findTile(gameBoard, SelecteChecker);
-                List<BoardTile> PossibleCheckerMoves = GetValidMoves.Get_Valid_Moves(gameBoard, tileofChecker.getX(), tileofChecker.getZ());
-                foreach (BoardTile tile in PossibleCheckerMoves)
+                double MoveEval = Minimax(move, gameValues.searchDeapth(), double.NegativeInfinity, double.PositiveInfinity, true);
+                if (MinEval > MoveEval)
                 {
-                    count++;
-                    Board newBoard = CloneBoard(gameBoard);
-                    SimulateMove(newBoard, tileofChecker.getX(), tileofChecker.getZ(), tile.getX(), tile.getZ());
-                    double boardEval = Minimax(newBoard, gameValues.searchDeapth(), double.NegativeInfinity, double.PositiveInfinity, true); //BoardEvaluation(newBoard);  //               
-                    if (boardEval < minEval)
-                    {
-                        bestMove.UpdateMove(tileofChecker.getX(), tileofChecker.getZ(), tile.getX(), tile.getZ());
-                        minEval = boardEval;
-                    }
-                    // Debug.Log("move number - "+count+": "+(Evaluate(newBoard, gameValues.WhiteTurn()) - Evaluate(newBoard, gameValues.BlackTurn())));
+                    bestMove = move;
+                    MinEval = MoveEval;
                 }
             }
-            Debug.Log("Bot Evaluation of the current possition: " + minEval);
+            return bestMove;
         }
-        GetValidMoves.Get_Valid_Moves(gameBoard, bestMove.GetSrc_X(), bestMove.GetSrc_Z());
 
-        return bestMove;
-    }
-    public void SimulateMove(Board gameBoard, int src_x, int src_z, int dest_x, int dest_z)
-    {
-        List<BoardTile> AdditionalMoves = new List<BoardTile>();
-        Checker movedChecker = gameBoard.GetBoardTiles()[src_x, src_z].getChecker();
-        if (gameBoard.TaggedCount() > 0)
-        {
-            bool took_pieace;
-            ChangeBoard.changePossition(gameBoard, src_x, src_z, dest_x, dest_z);
-            movedChecker = gameBoard.GetBoardTiles()[dest_x, dest_z].getChecker();
-            if (gameValues.isChecker(movedChecker))
-            {
-                BackTrack(gameBoard, src_x, src_z, dest_x, dest_z);
-                unpackTaggedStack();
-                took_pieace = gameBoard.DestoyTagged();
-            }
-            else
-                took_pieace = gameBoard.destroyPiecesBetween(src_x, src_z, dest_x, dest_z);
-            AdditionalMoves = GetValidMoves.CanTake(gameBoard, movedChecker, dest_x, dest_z);
-            if (!took_pieace || AdditionalMoves.Count == 0)
-            {
-                gameBoard.ChangeTurn();
-            }
-
-            //Debug.Log("White Material count = " + gameBoard.getWhiteCheckerCount() + " Black material count = " + gameBoard.getBlackCheckerCount());
-        }
-        else
-        {
-            ChangeBoard.changePossition(gameBoard, src_x, src_z, dest_x, dest_z);
-            movedChecker = gameBoard.GetBoardTiles()[dest_x, dest_z].getChecker();
-            gameBoard.ChangeTurn();
-
-        }
-        gameBoard.untagAll();
-        if (GetValidMoves.onPremotionsquare(gameBoard, movedChecker) && AdditionalMoves.Count == 0)
-        {
-            gameBoard.GetBoardTiles()[dest_x, dest_z].setChecker(new Queen(null, movedChecker.GetValue() + 2));
-        }
-    }
-    public double BoardEvaluation(Board gameBoard)
-    {
-        return Evaluate(gameBoard, gameValues.WhiteTurn()) - Evaluate(gameBoard, gameValues.BlackTurn());
-    }
-    [BurstCompatible]
-    public double Minimax(Board gameBoard, int deapth, double alpha, double beta, bool maximizing_player)
+    }// takes in a board and finds the best move
+    public double Minimax(int[,] logic_Board, int deapth, double alpha, double beta, bool maximizing_player)
     {
         if (deapth == 0)
-            return BoardEvaluation(gameBoard);
+            return Logic_Board_Evalution(logic_Board);
         double eval = 0;
         if (maximizing_player)
         {
+            List<int[,]> newPossitions = validMoves(logic_Board, 1);
             double maxEval = double.NegativeInfinity;
-            List<Checker> checkers = GetValidMoves.MovableCheckers(gameBoard, gameBoard.getTurn());
-            foreach (Checker SelecteChecker in checkers)
-            {
-                BoardTile tileofChecker = findTile(gameBoard, SelecteChecker);
-                List<BoardTile> PossibleCheckerMoves = GetValidMoves.Get_Valid_Moves(gameBoard, tileofChecker.getX(), tileofChecker.getZ());
-                foreach (BoardTile tile in PossibleCheckerMoves)
-                {
-
-                    Board newBoard = CloneBoard(gameBoard);
-                    GetValidMoves.Get_Valid_Moves(newBoard, tileofChecker.getX(), tileofChecker.getZ());
-                    SimulateMove(newBoard, tileofChecker.getX(), tileofChecker.getZ(), tile.getX(), tile.getZ());
-                    eval = Minimax(newBoard, deapth - 1, alpha, beta, false);
-                    maxEval = math.max(maxEval, eval);
-                    alpha = math.max(alpha, eval);
-                    if (beta <= alpha)
-                        break;
-                }
+            foreach (int[,] possition in newPossitions)
+            {   
+                eval = Minimax(possition, deapth - 1, alpha, beta, false);
+                maxEval = math.max(maxEval, eval);
+                alpha = math.max(alpha, eval);
+                if (beta <= alpha)
+                    break;
             }
             return maxEval;
         }
         else
         {
+            List<int[,]> newPossitions = validMoves(logic_Board, 2);
             double minEval = double.PositiveInfinity;
-            List<Checker> checkers = GetValidMoves.MovableCheckers(gameBoard, gameBoard.getTurn());
-            foreach (Checker SelecteChecker in checkers)
+            foreach (int[,] possition in newPossitions)
             {
-                BoardTile tileofChecker = findTile(gameBoard, SelecteChecker);
-                List<BoardTile> PossibleCheckerMoves = GetValidMoves.Get_Valid_Moves(gameBoard, tileofChecker.getX(), tileofChecker.getZ());
-                foreach (BoardTile tile in PossibleCheckerMoves)
-                {
-
-                    Board newBoard = CloneBoard(gameBoard);
-                    GetValidMoves.Get_Valid_Moves(newBoard, tileofChecker.getX(), tileofChecker.getZ());
-                    SimulateMove(newBoard, tileofChecker.getX(), tileofChecker.getZ(), tile.getX(), tile.getZ());
-                    eval = Minimax(newBoard, deapth - 1, alpha, beta, true);
-                    minEval = math.min(minEval, eval);
-                    //beta = Mathf.Min((float)beta, (float)eval);
-                    beta = math.min(beta, eval);
-                    if (beta <= alpha)
-                        break;
-                }
-
+                eval = Minimax(possition, deapth - 1, alpha, beta, true);
+                minEval = math.min(minEval, eval);
+                beta = math.min(beta, eval);
+                if (beta <= alpha)
+                    break;
             }
             return minEval;
         }
-    }
-    public double Evaluate(Board gameBoard, int side) // TODO: Evaluate Possition and Display it on screan
-    {
-        bool tempo = false;
-        BoardTile[,] Tiles = gameBoard.GetBoardTiles();
-        if (gameBoard.getTurn() == side)
-            tempo = true;
-        double checker_count = 0;
-        double queen_count = 0;
-        double undefended_checkers = 0;
-        double centralized_checkers = 0;
-        double bias = 0;
-        for (int i = 0; i < 10; i++)
-        {
-            for (int j = 0; j < 10; j++)
-            {
-                Checker checker = Tiles[i, j].getChecker();
-                try
-                {
-                    if (checker.GetColor() == side)
-                    {
-                        if (gameValues.isChecker(checker))
-                            checker_count++;
-                        else
-                            queen_count++;
-                        if (UndefendenAttackedChecker(gameBoard, i, j))
-                        {
-                            undefended_checkers += checker.GetType() == typeof(Queen) ? 6 : 1;
-                            if (!tempo)
-                                undefended_checkers *= 1.2;
-                        }
-                        centralized_checkers += CentralizedChecker(gameBoard, side, i, j);
-                    }
-
-                }
-                catch
-                {
-                    //no checker in the tile
-                }
-            }
-        }
-        double closeToPromotion = CloseToPromotion(gameBoard, side);
-        //Debug.Log("promoting checkers :"+closeToPromotion);
-        if (checker_count + queen_count == 0)
-            return double.NegativeInfinity;
-        bias -= 20 / checker_count;
-        return checker_count + (queen_count * 6) - undefended_checkers + centralized_checkers + undefendedBackRow(gameBoard, side) + bias;/* + closeToPromotion;*/
-    }
-    public double StructuredCenter(Board gameBoard, int side)
-    {
-        double Eval = 0;
-        if (side == gameValues.WhiteTurn())
-        {
-            for (int i = 4; i < 7; i++)
-            {
-                for (int j = 0; j < 10; j++)
-                {
-                    try
-                    {
-                        Checker CurrChecker = gameBoard.GetBoardTiles()[i, j].getChecker();
-                        if (CurrChecker.GetType() != typeof(Queen) && CurrChecker.GetColor() == gameValues.whiteChecker())
-                        {
-                            switch (i)
-                            {
-                                case 4:
-                                    if (j >= 4 && j <= 6)
-                                        Eval += 0.1;
-                                    Eval += 0.05;
-                                    break;
-                                case 5:
-                                    if (j >= 4 && j <= 6)
-                                        Eval += 0.08;
-
-                                    Eval += 0.03;
-                                    break;
-                                case 6:
-                                    if (j >= 4 && j <= 6)
-                                        Eval += 0.05;
-
-                                    Eval += 0.07;
-                                    break;
-                                default:
-                                    break;
-                            }
-                        }
-                    }
-                    catch
-                    {
-                        //no checker found
-                    }
-
-                }
-            }
-        }
-        else
-        {
-            for (int i = 5; i > 2; i--)
-            {
-                for (int j = 0; j < 10; j++)
-                {
-                    try
-                    {
-                        Checker CurrChecker = gameBoard.GetBoardTiles()[i, j].getChecker();
-                        if (CurrChecker.GetType() != typeof(Queen) && CurrChecker.GetColor() == gameValues.whiteChecker())
-                        {
-                            switch (i)
-                            {
-                                case 5:
-                                    if (j >= 4 && j <= 6)
-                                        Eval += 0.1;
-                                    Eval += 0.05;
-                                    break;
-                                case 4:
-                                    if (j >= 4 && j <= 6)
-                                        Eval += 0.08;
-                                    Eval += 0.03;
-                                    break;
-                                case 3:
-                                    if (j >= 4 && j <= 6)
-                                        Eval += 0.05;
-                                    Eval += 0.07;
-                                    break;
-                                default:
-                                    break;
-                            }
-                        }
-                    }
-                    catch
-                    {
-                        //no checker found
-                    }
-
-                }
-            }
-        }
-        return Eval;
-    }
-    public double CloseToPromotion(Board gameBoard, int side)
-    {
-        double QueenEval = 0;
-        if (side == gameValues.WhiteTurn())
-        {
-            for (int i = 7; i < 10; i++)
-            {
-                for (int j = 0; j < 10; j++)
-                    try
-                    {
-                        if (gameBoard.GetBoardTiles()[i, j].getChecker().GetType() != typeof(Queen) && gameBoard.GetBoardTiles()[i, j].getChecker().GetColor() == side)
-                        {
-                            QueenEval += ((i - 6.5) * 1.2) * (UnblockedPathTOPromotion(gameBoard, gameValues.WhiteTurn(), i, j) ? 1 : 0);
-                        }
-                    }
-                    catch
-                    {
-                        // no checker
-                    }
-            }
-        }
-        else
-        {
-            for (int i = 2; i > 0; i--)
-            {
-                for (int j = 0; j < 10; j++)
-                    try
-                    {
-                        if (gameBoard.GetBoardTiles()[i, j].getChecker().GetType() != typeof(Queen) && gameBoard.GetBoardTiles()[i, j].getChecker().GetColor() == side)
-                        {
-                            QueenEval += ((i - 6.5) * 1.2) * (UnblockedPathTOPromotion(gameBoard, gameValues.BlackTurn(), i, j) ? 1 : 0);
-                        }
-                    }
-                    catch
-                    {
-                        // no checker
-                    }
-            }
-        }
-        return QueenEval;
-    }
-    private bool UndefendenAttackedChecker(Board gameBoard, int index_x, int index_z)
-    {
-        bool underAttack = false;
-        Checker currentChecker = gameBoard.GetBoardTiles()[index_x, index_z].getChecker();
-        int temp_x, temp_z;
-        try
-        {
-            if (gameBoard.GetBoardTiles()[index_x + 1, index_z + 1].isEmpty())
-            {
-                if (gameBoard.GetBoardTiles()[index_x - 1, index_z - 1].isEnemyChecker(currentChecker))
-                    underAttack = true;
-                temp_x = index_x - 1;
-                temp_z = index_z - 1;
-                try
-                {
-                    while (gameBoard.GetBoardTiles()[temp_x, temp_z].isEmpty())
-                    {
-                        temp_x--;
-                        temp_z--;
-                    }
-                    if (gameBoard.GetBoardTiles()[temp_x, temp_z].isEnemyChecker(currentChecker) && (gameBoard.GetBoardTiles()[temp_x, temp_z].getChecker().GetValue() == gameValues.BlackQueen() || gameBoard.GetBoardTiles()[temp_x, temp_z].getChecker().GetValue() == gameValues.WhiteQueen()))
-                        underAttack = true;
-                }
-                catch
-                {
-                    // no checker found
-                }
-            }
-            if (gameBoard.GetBoardTiles()[index_x - 1, index_z - 1].isEmpty())
-            {
-                if (gameBoard.GetBoardTiles()[index_x + 1, index_z + 1].isEnemyChecker(currentChecker))
-                    underAttack = true;
-                else
-                {
-                    temp_x = index_x + 1;
-                    temp_z = index_z + 1;
-                    try
-                    {
-                        while (gameBoard.GetBoardTiles()[temp_x, temp_z].isEmpty())
-                        {
-                            temp_x++;
-                            temp_z++;
-                        }
-                        if (gameBoard.GetBoardTiles()[temp_x, temp_z].isEnemyChecker(currentChecker) && (gameBoard.GetBoardTiles()[temp_x, temp_z].getChecker().GetValue() == gameValues.BlackQueen() || gameBoard.GetBoardTiles()[temp_x, temp_z].getChecker().GetValue() == gameValues.WhiteQueen()))
-                            underAttack = true;
-                    }
-                    catch
-                    {
-                        // no checker found
-                    }
-                }
-
-            }
-            if (gameBoard.GetBoardTiles()[index_x + 1, index_z - 1].isEmpty())
-            {
-                if (gameBoard.GetBoardTiles()[index_x - 1, index_z + 1].isEnemyChecker(currentChecker))
-                    underAttack = true;
-                else
-                {
-                    temp_x = index_x - 1;
-                    temp_z = index_z + 1;
-                    try
-                    {
-                        while (gameBoard.GetBoardTiles()[temp_x, temp_z].isEmpty())
-                        {
-                            temp_x--;
-                            temp_z++;
-                        }
-                        if (gameBoard.GetBoardTiles()[temp_x, temp_z].isEnemyChecker(currentChecker) && (gameBoard.GetBoardTiles()[temp_x, temp_z].getChecker().GetValue() == gameValues.BlackQueen() || gameBoard.GetBoardTiles()[temp_x, temp_z].getChecker().GetValue() == gameValues.WhiteQueen()))
-                            underAttack = true;
-                    }
-                    catch
-                    {
-                        // no checker found
-                    }
-                }
-
-            }
-            if (gameBoard.GetBoardTiles()[index_x - 1, index_z + 1].isEmpty())
-            {
-                if (gameBoard.GetBoardTiles()[index_x + 1, index_z - 1].isEnemyChecker(currentChecker))
-                    underAttack = true;
-                else
-                {
-                    temp_x = index_x + 1;
-                    temp_z = index_z - 1;
-                    try
-                    {
-                        while (gameBoard.GetBoardTiles()[temp_x, temp_z].isEmpty())
-                        {
-                            temp_x++;
-                            temp_z--;
-                        }
-                        if (gameBoard.GetBoardTiles()[temp_x, temp_z].isEnemyChecker(currentChecker) && (gameBoard.GetBoardTiles()[temp_x, temp_z].getChecker().GetValue() == gameValues.BlackQueen() || gameBoard.GetBoardTiles()[temp_x, temp_z].getChecker().GetValue() == gameValues.WhiteQueen()))
-                            underAttack = true;
-                    }
-                    catch
-                    {
-                        // no checker found
-                    }
-                }
-
-            }
-
-        }
-        catch
-        {
-            return underAttack;
-        }
-
-        return underAttack;
-    }
-    private double CentralizedChecker(Board gameBoard, int side, int index_x, int index_z)
-    {
-        double eval = 0;
-        if (side == gameValues.WhiteTurn())
-        {
-            if (index_x == 4)
-            {
-                eval += 0.03;
-                if (index_z >= 3 && index_z <= 7)
-                    eval += 0.1;
-            }
-
-            if (index_x >= 5)
-            {
-                eval += 0.04;
-                if (index_z >= 3 && index_z <= 7)
-                    eval += 0.1;
-            }
-        }
-        else
-        {
-            if (index_x == 5)
-            {
-                eval += 0.03;
-                if (index_z >= 3 && index_z <= 7)
-                    eval += 0.1;
-            }
-
-            if (index_x <= 4)
-            {
-                eval += 0.04;
-                if (index_z >= 3 && index_z <= 7)
-                    eval += 0.1;
-            }
-
-        }
-        return eval;
-    }
-    private bool UnblockedPathTOPromotion(Board gameBoard, int side, int index_x, int index_z)
-    {
-        bool result = false;
-        if (side == gameValues.WhiteTurn())
-        {
-            if (index_x == 9)
-                return true;
-            try
-            {
-                if (gameBoard.DefendedSqueare(index_x, index_z, gameValues.blackChecker()))
-                    return false;
-                else
-                    result = UnblockedPathTOPromotion(gameBoard, side, index_x + 1, index_z + 1) || UnblockedPathTOPromotion(gameBoard, side, index_x + 1, index_z - 1);
-            }
-            catch
-            {
-                if (index_x >= 9)
-                    result = true;
-                else
-                {
-                    result = UnblockedPathTOPromotion(gameBoard, side, index_x + 1, index_z + 1) || UnblockedPathTOPromotion(gameBoard, side, index_x + 1, index_z - 1);
-                }
-            }
-        }
-        else
-        {
-            if (index_x == 0)
-                return true;
-            try
-            {
-                if (gameBoard.DefendedSqueare(index_x, index_z, gameValues.whiteChecker()))
-                    return false;
-                else
-                    result = UnblockedPathTOPromotion(gameBoard, side, index_x - 1, index_z + 1) || UnblockedPathTOPromotion(gameBoard, side, index_x - 1, index_z - 1);
-            }
-            catch
-            {
-                if (index_x <= 0)
-                    result = true;
-                else
-                {
-                    result = UnblockedPathTOPromotion(gameBoard, side, index_x - 1, index_z + 1) || UnblockedPathTOPromotion(gameBoard, side, index_x - 1, index_z - 1);
-                }
-            }
-
-        }
-        return result;
-    }
-    private double undefendedBackRow(Board gameBoard, int turn)
-    {
-        double backRowCount = 0;
-        if (turn == gameValues.WhiteTurn())
-        {
-            for (int i = 0; i < 10; i++)
-            {
-                try
-                {
-                    gameBoard.GetBoardTiles()[0, i].getChecker().GetValue();
-                    backRowCount += 0.5;
-                }
-                catch
-                {
-                    backRowCount -= 0.5;
-                }
-            }
-        }
-        else
-        {
-            for (int i = 0; i < 10; i++)
-            {
-                try
-                {
-                    gameBoard.GetBoardTiles()[9, i].getChecker().GetValue();
-                    backRowCount += 0.1;
-                }
-                catch
-                {
-                    backRowCount -= 0.1;
-                }
-            }
-        }
-        return backRowCount;
-    }
-    public Board CloneBoard(Board gameBoard)
-    {
-        Board newBoard = null;
-        BoardTile[,]
-        BoardTiles = new BoardTile[10, 10];
-        int counterrows = 0;
-        int countercols = 0;
-        for (float i = 4.5f; i >= -4.5; i--)
-        {
-            countercols = 0;
-            for (float j = 4.5f; j >= -4.5f; j--)
-            {
-                BoardTiles[counterrows, countercols] = new BoardTile(new Vector3(j, 8.5f, i), null, counterrows, countercols);
-                countercols++;
-            }
-            counterrows++;
-        }
-        for (int i = 0; i < 10; i++)
-        {
-            for (int j = 0; j < 10; j++)
-            {
-                try
-                {
-                    BoardTiles[i, j].setChecker(gameBoard.GetBoardTiles()[i, j].getChecker().Clone());
-                }
-                catch
-                {
-                    //no checker found;
-                }
-            }
-        }
-        newBoard = new Board(BoardTiles);
-        newBoard.setTurn(gameBoard.getTurn());
-        return newBoard;
-    }
-    public bool BackTrack(Board gameBoard, int src_x, int src_z, int dest_x, int dest_z)
-    {
-        bool took = false;
-        if (src_x == dest_x && src_z == dest_z)
-        {
-            return true;
-        }
-        if (GetValidMoves.InRange(src_x + 1, src_z + 1) && gameBoard.GetBoardTiles()[src_x + 1, src_z + 1].IsTagged())
-        {
-            gameBoard.GetBoardTiles()[src_x + 1, src_z + 1].SetTag(false);
-            if (BackTrack(gameBoard, src_x + 2, src_z + 2, dest_x, dest_z))
-            {
-                tileStack.Push(gameBoard.GetBoardTiles()[src_x + 1, src_z + 1]);
-                took = true;
-            }
-        }
-        if (GetValidMoves.InRange(src_x - 1, src_z + 1) && gameBoard.GetBoardTiles()[src_x - 1, src_z + 1].IsTagged())
-        {
-            gameBoard.GetBoardTiles()[src_x - 1, src_z + 1].SetTag(false);
-            if (BackTrack(gameBoard, src_x - 2, src_z + 2, dest_x, dest_z))
-            {
-                tileStack.Push(gameBoard.GetBoardTiles()[src_x - 1, src_z + 1]);
-                took = true;
-            }
-        }
-        if (GetValidMoves.InRange(src_x - 1, src_z - 1) && gameBoard.GetBoardTiles()[src_x - 1, src_z - 1].IsTagged())
-        {
-            gameBoard.GetBoardTiles()[src_x - 1, src_z - 1].SetTag(false);
-            if (BackTrack(gameBoard, src_x - 2, src_z - 2, dest_x, dest_z))
-            {
-                tileStack.Push(gameBoard.GetBoardTiles()[src_x - 1, src_z - 1]);
-                took = true;
-            }
-        }
-        if (GetValidMoves.InRange(src_x + 1, src_z - 1) && gameBoard.GetBoardTiles()[src_x + 1, src_z - 1].IsTagged())
-        {
-            gameBoard.GetBoardTiles()[src_x + 1, src_z - 1].SetTag(false);
-            if (BackTrack(gameBoard, src_x + 2, src_z - 2, dest_x, dest_z))
-            {
-                tileStack.Push(gameBoard.GetBoardTiles()[src_x + 1, src_z - 1]);
-                took = true;
-            }
-        }
-        return took;
-    }
-    public void unpackTaggedStack()
-    {
-        while (tileStack.Count > 0)
-        {
-            tileStack.Pop().SetTag(true);
-        }
-    }
+        
+    }// finds board evaluation using the Minimax algorithm with alpha beta pruning
 }

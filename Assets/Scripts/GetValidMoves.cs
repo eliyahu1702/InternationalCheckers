@@ -116,6 +116,7 @@ public class GetValidMoves : MonoBehaviour
                 if (tile.getChecker() != null)
                 {
                     if (tile.getChecker().GetColor() == turn)
+                    if (tile.getChecker().GetColor() == turn)
                     {
                         exzists = CanTake(gameBoard, tile.getChecker(), i, j);
                         
@@ -345,6 +346,26 @@ public class GetValidMoves : MonoBehaviour
        
     }
 
+    public static string PrintBoard(Board gameBoard)
+    {
+        string Result = "";
+        for (int i = 0; i < 10; i++)
+        {
+            for (int j = 0; j < 10; j++)
+            {
+                try
+                {
+                    Result += gameBoard.GetBoardTiles()[i, j].getChecker().GetValue() + " ";
+                }
+                catch
+                {
+                    Result += 0 + " ";
+                }
+            }
+            Result += "\n";
+        }
+        return Result;
+    }
     /*public Vector3[] Can_take_White(int index_x,int index_z,int counter)
     {
         if(InRange(index_x-1,inde))

@@ -1,6 +1,6 @@
 
 using System.Collections.Generic;
-using System.Threading;
+using System.Threading.Tasks;
 using UnityEngine;
 
 
@@ -21,7 +21,6 @@ public class DragObject : MonoBehaviour
     List<Checker> movable_checkers;
     Stack<BoardTile> tileStack;
     Ray ray;
-
     private AudioSource source;
         [SerializeField] private List<AudioClip> audioClips;
     void Start()
@@ -34,27 +33,18 @@ public class DragObject : MonoBehaviour
     }
     void OnMouseDown()
     {
-        
         mZCoord = Camera.main.WorldToScreenPoint(
          gameObject.transform.position).z;
-        // Store offset = gameobject world pos - mouse world pos
         mOffset = gameObject.transform.position - GetMouseAsWorldPoint();
         location = transform.position;
         temp_location = location;
         List<BoardTile> moves;
         movable_checkers = GetValidMoves.MovableCheckers(gameBoard, gameBoard.getTurn());
-        //Debug.Log(gameBoard.TaggedCount());
         Checker SelectedPiece = null;
         SelectedPiece = PieceFromTransform(location);
 
         if (SelectedPiece == null || !movable_checkers.Contains(SelectedPiece) || gameBoard.getTurn() != SelectedPiece.GetColor()) return;
         moves = GetValidMoves.Get_Valid_Moves(gameBoard, index_x, index_z);
-
-        /*if (moves.Count == 0)
-        {
-            gameBoard.ChangeTurn();
-            Debug.Log(gameValues.nameByTurn(gameBoard.getTurn()) + " Won");
-        }*/
         GameObject Board = GameObject.Find("Board");
         GameObject Highlight = Board.GetComponent<ObjectPooling>().GetPooledObjects();
         if (Highlight != null)
@@ -65,21 +55,23 @@ public class DragObject : MonoBehaviour
                 Highlight.SetActive(true);
                 Highlight = Board.GetComponent<ObjectPooling>().GetPooledObjects();
             }
-    }
+    } // checkes if mouse is held, shows avelable moves for the checker
     public void Update()
     {
         if (manager.GetComponent<GameManager>().Playing_Ai && manager.GetComponent<GameManager>().moveMade == true && Time.frameCount % 30 == 0)
         {
-            ComputerMove();
-            Debug.Log("Calculating");
-                //manager.GetComponent<ComputerPlayer>().PlayRandomMove(GameObject.Find("Board").GetComponent<CheckerGeneration>().gameBoard);
-                //playMovingNoice(Tempchecker);
-                //manager.GetComponent<GameManager>().moveMade = false;
-           // }).Start();
+            manager.GetComponent<GameManager>().SetCalculatingText(true);
+            manager.GetComponent<GameManager>().doingMove = true;  
             
-            
+
         }
-    }
+        if (manager.GetComponent<GameManager>().doingMove && Time.frameCount % 60 == 0 )
+        {
+            ComputerMove();
+            manager.GetComponent<GameManager>().SetCalculatingText(false);
+            manager.GetComponent<GameManager>().doingMove = false;
+        }
+    } // works every frame (60fps) checkes if a player made a move and calls the computer move function for it
 
     private void OnTriggerEnter(Collider other)
     {
@@ -120,11 +112,11 @@ public class DragObject : MonoBehaviour
                 TakenChecker = null;
         }
 
-    }
+    } // checks collision with highlight which shows avalible moves
     private void OnTriggerExit(Collider other)
     {
         temp_location = location;
-    }
+    } // checkes if checker stops colliding with the and returns the checker to its oreginal possition 
     public Checker PieceFromTransform(Vector3 location)
     {
         Checker SelectedPiece = gameBoard.GetBoardTiles()[0,0].getChecker();
@@ -143,7 +135,7 @@ public class DragObject : MonoBehaviour
                 break;
         }
         return SelectedPiece;
-    }
+    }// finds selected checker on the board and returns its location
     private Vector3 GetMouseAsWorldPoint()
     {
 
@@ -163,17 +155,14 @@ public class DragObject : MonoBehaviour
         ray = Camera.main.ScreenPointToRay(mousePoint);
         return Camera.main.ScreenToWorldPoint(mousePoint);
 
-    }
-
-
-
+    }// returns mouse possition scaled to the possition of the camera
     void OnMouseDrag()
     {
         transform.position = GetMouseAsWorldPoint() + mOffset;
         SnapIntoPossition.snapChecker(transform);
 
-    }
-    private void OnMouseUp()
+    } // moves the object to the mouse possition while mouse is dragged
+    private void OnMouseUp()// places the piece on the destination square, changes the turn if a move was made
     {
         GameObject[] Highlights = GameObject.FindGameObjectsWithTag("Highlight");
         foreach (GameObject h in Highlights)
@@ -240,85 +229,6 @@ public class DragObject : MonoBehaviour
         {
             manager.GetComponent<GameManager>().EndGame(gameBoard.getTurn());
         }
-       
-    }
-    public void MoveMade(Board gameBoard,int src_x, int src_z, int dest_x, int dest_z)
-    {
-        Checker movedChecker = gameBoard.GetBoardTiles()[src_x, src_z].getChecker();
-        MoveCheckerPosition(gameBoard, src_x, src_z, dest_x, dest_z);
-        if (gameBoard.TaggedCount() > 0)
-        {
-            bool took_pieace;
-            ChangeBoard.changePossition(gameBoard, src_x, src_z, dest_x, dest_z);
-            movedChecker = gameBoard.GetBoardTiles()[dest_x, dest_z].getChecker();
-            if (gameValues.isChecker(movedChecker))
-            {
-                BackTrack(gameBoard,src_x, src_z, dest_x, dest_z);
-                unpackTaggedStack();
-                took_pieace = gameBoard.DestoyTagged();
-            }
-            else
-                took_pieace = gameBoard.destroyPiecesBetween(src_x, src_z, dest_x, dest_z);
-            if (took_pieace)
-                playTakingNoice();
-            else
-                playMovingNoice(movedChecker);
-            AdditionalMoves = GetValidMoves.CanTake(gameBoard, movedChecker, dest_x, dest_z);
-            if (!took_pieace || AdditionalMoves.Count == 0)
-            {
-                gameBoard.ChangeTurn();
-                manager.GetComponent<GameManager>().moveMade = false;
-                movable_checkers = GetValidMoves.MovableCheckers(gameBoard, gameBoard.getTurn());
-                if (movable_checkers == null || movable_checkers.Count == 0)
-                {
-                    manager.GetComponent<GameManager>().EndGame(gameBoard.getTurn());
-                }
-            }
-            else
-            {
-                if (movable_checkers.Count == 0)
-                {
-                    manager.GetComponent<GameManager>().EndGame(gameBoard.getTurn());
-                }
-                else 
-                {
-                    manager.GetComponent<ComputerPlayer>().PlayRandomMove(gameBoard);
-
-                }        
-            }
-
-            //Debug.Log("White Material count = " + gameBoard.getWhiteCheckerCount() + " Black material count = " + gameBoard.getBlackCheckerCount());
-        }
-        else
-        {
-            gameBoard.GetBoardTiles()[src_x, src_z].getChecker().GetCheckerObject().transform.position = gameBoard.GetBoardTiles()[dest_x, dest_z].getBoardPossition();
-            ChangeBoard.changePossition(gameBoard, src_x, src_z, dest_x, dest_z);
-            movedChecker = gameBoard.GetBoardTiles()[dest_x, dest_z].getChecker();
-            gameBoard.ChangeTurn();
-            manager.GetComponent<GameManager>().moveMade = false;
-            movable_checkers = GetValidMoves.MovableCheckers(gameBoard, gameBoard.getTurn());
-            playMovingNoice(movedChecker);
-
-        }
-        gameBoard.untagAll();
-        if (GetValidMoves.onPremotionsquare(gameBoard, movedChecker) && AdditionalMoves.Count == 0)
-        {
-            CheckerGeneration.QueenPiece(gameBoard, dest_x, dest_z);
-            playPromotionNoice();
-        }
-        if (movable_checkers.Count == 0)
-        {
-            manager.GetComponent<GameManager>().EndGame(gameBoard.getTurn());
-        }
-    }
-    public void MoveCheckerPosition(Board gameBoard, int src_x, int src_z, int dest_x, int dest_z)
-    {
-        while (gameBoard.GetBoardTiles()[src_x, src_z].getChecker().GetCheckerObject().transform.position != gameBoard.GetBoardTiles()[dest_x, dest_z].getBoardPossition())
-        {
-            gameBoard.GetBoardTiles()[src_x, src_z].getChecker().GetCheckerObject().transform.position = Vector3.Lerp(gameBoard.GetBoardTiles()[src_x, src_z].getChecker().GetCheckerObject().transform.position, gameBoard.GetBoardTiles()[dest_x, dest_z].getBoardPossition(), 0.1f);
-            System.Threading.Thread.Sleep(1);
-        }
-        
     }
     private void OnMouseUpAsButton()
     {
@@ -344,17 +254,17 @@ public class DragObject : MonoBehaviour
         }
 
             
-    }
+    }// plays a sound if a piece is moved/taken/promoted
     private void playTakingNoice()
     {
         GameObject Board = GameObject.Find("Board");
         Board.GetComponent<playGameSounds>().playTaking();
-    }
+    }//plays moving sound
     public void playPromotionNoice()
     {
         GameObject Board = GameObject.Find("Board");
         Board.GetComponent<playGameSounds>().playPromotion();
-    }
+    }//plays promotion sound
     public bool BackTrack(Board gameBoard,int src_x, int src_z, int dest_x, int dest_z)
     {
         bool took = false;
@@ -429,7 +339,7 @@ public class DragObject : MonoBehaviour
             }
         }
         return took;
-    }
+    }//function made for chain taking pieces
     public void unpackTaggedStack()
     {
         while (tileStack.Count > 0)
@@ -438,13 +348,13 @@ public class DragObject : MonoBehaviour
             //Debug.Log(tile.getX() +" "+ tile.getZ());
             tileStack.Pop().SetTag(true);
         }
-    }
-
-    public void ComputerMove()
+    }// helper function for backtrack
+    public async void ComputerMove()
     {
-        manager.GetComponent<ComputerPlayer>().PlayRandomMove(GameObject.Find("Board").GetComponent<CheckerGeneration>().gameBoard);
+        manager.GetComponent<ComputerPlayer>().PlayComputerMove(GameObject.Find("Board").GetComponent<CheckerGeneration>().gameBoard);
         playMovingNoice(Tempchecker);
         manager.GetComponent<GameManager>().moveMade = false;
+        await Task.Yield();
 
-    }
+    }// activates playComputerMove() from ComputerPlayer.cs
 }

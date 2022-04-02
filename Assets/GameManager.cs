@@ -8,9 +8,11 @@ public class GameManager : MonoBehaviour
     // Start is called before the first frame update
     public Canvas GameEndCanvas;
     public Text outcomeText;
+    public GameObject CalculatingText;
     public bool Playing_White = true;
     public bool Playing_Ai = true;
     public bool moveMade = false;
+    public bool doingMove = false;
 
     // Update is called once per frame
     public void ExitTheGame()
@@ -52,4 +54,9 @@ public class GameManager : MonoBehaviour
     { return Playing_Ai; }
     public bool GetPlayingWhite()
     { return Playing_White; }
+
+    public void SetCalculatingText(bool Enabled)
+    {
+        CalculatingText.SetActive(Enabled);
+    }
 }
