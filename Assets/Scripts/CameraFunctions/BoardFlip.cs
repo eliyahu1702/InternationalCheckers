@@ -24,8 +24,6 @@ public class BoardFlip : MonoBehaviour
             GameObject Board = GameObject.Find("Board");
             Board.GetComponent<CheckerGeneration>().enabled = false;
             Board.GetComponent<CheckerGeneration>().enabled = true;
-
-
         }
     }
     IEnumerator Waiter()

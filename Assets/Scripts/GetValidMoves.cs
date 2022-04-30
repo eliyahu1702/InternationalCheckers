@@ -2,6 +2,14 @@ using System.Collections.Generic;
 using UnityEngine;
 public class GetValidMoves : MonoBehaviour
 {
+    public DragObject DragObject
+    {
+        get => default;
+        set
+        {
+        }
+    }
+
     // Start is called before the first frame update
     void Start()
     {

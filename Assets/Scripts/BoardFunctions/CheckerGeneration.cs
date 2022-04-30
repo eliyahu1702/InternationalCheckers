@@ -1,10 +1,9 @@
 using UnityEngine;
 public static class gameValues // class for the values of the game. all numbers are here 
 {
+
     public static int searchDeapth()
     { return 6; }
-    public static int WhiteTurn() { return 1; }
-    public static int BlackTurn() { return 2; }
     public static int whiteChecker() { return 1; }
     public static int blackChecker() { return 2; }
     public static int WhiteQueen() { return 3; }
@@ -21,40 +20,7 @@ public static class gameValues // class for the values of the game. all numbers 
     public static int InnitialEvaluation() { return 0; }
     public static bool isWhitePease(Checker checker) { return checker.GetValue() % 2 == 1; }
     public static bool isChecker(Checker checker)
-    { return checker!= null && checker.GetValue() <= gameValues.blackChecker(); }
-    public static bool isQueen(Checker checker)
-    { return checker.GetValue() >= gameValues.WhiteQueen(); }
-    public static string nameByTurn(int turn)
-    {
-        if (turn == whiteChecker())
-            return "White";
-        return "Black";
-    }
-
-    public static Direction[] Directions()
-    {
-        Direction MovingDir = new Direction(1, 1);
-        Direction MovingDir2 = new Direction(-1, 1);
-        Direction MovingDir3 = new Direction(1, -1);
-        Direction MovingDir4 = new Direction(-1, -1);
-        Direction[] directions = new Direction[4] { MovingDir, MovingDir2, MovingDir3, MovingDir4 };
-        return directions;
-
-    }
-}
-public class Direction
-{
-    public int x;
-    public int z;
-    public Direction(int x, int z)
-    {
-        this.x = x;
-        this.z = z;
-    }
-    public int X()
-    { return x; }
-    public int Z()
-    { return z; }
+    { return checker != null && checker.GetValue() <= gameValues.blackChecker(); }
 }
 public class Checker
 {
@@ -65,6 +31,23 @@ public class Checker
         this.gameObject = gameObject;
         this.value = value;
     }
+
+    public BoardFlip BoardFlip
+    {
+        get => default;
+        set
+        {
+        }
+    }
+
+    public BoardTile BoardTile
+    {
+        get => default;
+        set
+        {
+        }
+    }
+
     public int GetValue()
     { return this.value; }
     public void SetValue(int value)
@@ -97,6 +80,7 @@ public class Queen : Checker
     {
 
     }
+
     public override Checker Clone()
     { return new Queen(null, this.value); }
 }
@@ -120,6 +104,15 @@ public class BoardTile
         X_Index = x;
         Z_Index = z;
     }
+
+    public Board Board
+    {
+        get => default;
+        set
+        {
+        }
+    }
+
     public int getX()
     { return X_Index; }
     public void setX(int x)
@@ -185,42 +178,23 @@ public class Board
         turn = gameValues.whiteChecker();
         takingTurn = false;
     }
-    public bool DefendedSqueare(int index_x, int index_z, int Defending_Color)
+
+    public CheckerGeneration CheckerGeneration
     {
-        bool defended = false;
-        Direction[] directions = gameValues.Directions();
-        for (int i = 0; i < directions.Length; i++)
+        get => default;
+        set
         {
-            try
-            {
-                if (BoardTiles[index_x + directions[i].X(), index_z + directions[i].X()].getChecker().GetColor() == Defending_Color)
-                    defended = true;
-            }
-            catch
-            {
-                return false;
-            }
         }
-        return defended;
     }
+
     public BoardTile[,] GetBoardTiles()
     { return BoardTiles; }
-    public void SetBoardTile(BoardTile BoardTile, int i, int j)
-    { BoardTiles[i, j] = BoardTile; }
-    public double GetEvaluation()
-    {
-        return WhiteMaterial - BlackMaterial;
-    }
-    public void SetEvalueation(double eval)
-    { this.evaluation = eval; }
     public int getTurn()
     { return turn; }
     public void setTurn(int turn)
     { this.turn = turn; }
     public void ChangeTurn()
     { if (!takingTurn) turn ^= 3; }
-    public bool WhiteWin() { return this.BlackCheckerCount == 0; }
-    public bool BlackWin() { return this.WhiteCheckerCount == 0; }
     public void destroyPiece(int x_index, int z_index)
     {
         RemovePieceCount(BoardTiles[x_index, z_index].getChecker());
@@ -242,8 +216,6 @@ public class Board
         }
         return taken;
     }
-    public int GetOpisiteTurn()
-    { return turn ^ 3; }
     public void untagAll()
     {
         for (int i = 0; i < 10; i++)
@@ -311,11 +283,6 @@ public class Board
     { return QueenPosition; }
     public void setQueenTransform(Transform transform)
     { QueenPosition = transform; }
-    public int getWhiteCheckerCount()
-    { return WhiteCheckerCount; }
-    public int getBlackCheckerCount()
-    { return BlackCheckerCount; }
-
 
 }
 
@@ -512,9 +479,6 @@ public class CheckerGeneration : MonoBehaviour
         }
 
     }
-    public Board GetBoard()
-    { return gameBoard; }
-
 }
 
 

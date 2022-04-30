@@ -9,12 +9,6 @@ public class ChangeBoard : MonoBehaviour
     {
 
     }
-
-    // Update is called once per frame
-    void Update()
-    {
-
-    }
     public static void changePossition(Board gameBoard, int index_src_x, int index_src_z, int index_dest_x, int index_dest_z)
     {
         gameBoard.GetBoardTiles()[index_dest_x, index_dest_z].setChecker(gameBoard.GetBoardTiles()[index_src_x, index_src_z].getChecker());

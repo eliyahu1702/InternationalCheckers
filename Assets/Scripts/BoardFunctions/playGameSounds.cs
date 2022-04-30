@@ -13,10 +13,6 @@ public class playGameSounds : MonoBehaviour
 
 
 
-    public void playCheckerPlayer()
-    { source.PlayOneShot(CheckerMovingPlayer); }
-    public void playCheckerMoveOponent()
-    { source.PlayOneShot(CheckerMovingOponent); }
     public void playCheckerMove(Checker c)
     {
         if (c.GetValue() == gameValues.whiteChecker())

@@ -1,0 +1,189 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="ComputerPlayer">
+    <Position X="0.5" Y="2.25" Width="2.75" />
+    <Compartments>
+      <Compartment Name="Fields" Collapsed="true" />
+    </Compartments>
+    <NestedTypes>
+      <Class Name="ComputerPlayer.MyEqualityComparer" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>Assets\Scripts\ComputerPlayer.cs</NewMemberFileName>
+        </TypeIdentifier>
+        <Lollipop Position="0.2" />
+      </Class>
+    </NestedTypes>
+    <AssociationLine Name="GameManager1" Type="GameManager" ManuallyRouted="true" FixedFromPoint="true" FixedToPoint="true">
+      <Path>
+        <Point X="3.25" Y="5.438" />
+        <Point X="3.84" Y="5.438" />
+        <Point X="3.84" Y="5.057" />
+        <Point X="6.292" Y="5.057" Type="JumpStart" />
+        <Point X="6.458" Y="5.057" Type="JumpEnd" />
+        <Point X="6.625" Y="5.057" />
+        <Point X="6.625" Y="2.938" />
+        <Point X="7" Y="2.938" />
+      </Path>
+    </AssociationLine>
+    <TypeIdentifier>
+      <HashCode>AgRAAQQQACAAAAAEAEBIAAQAAAAAAAAAAGgAAQBAAQE=</HashCode>
+      <FileName>Assets\Scripts\ComputerPlayer.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Property Name="GameManager1" />
+    </ShowAsAssociation>
+  </Class>
+  <Class Name="DragObject">
+    <Position X="4.5" Y="5.25" Width="1.5" />
+    <Compartments>
+      <Compartment Name="Fields" Collapsed="true" />
+    </Compartments>
+    <AssociationLine Name="GameManager" Type="GameManager" FixedFromPoint="true" FixedToPoint="true">
+      <Path>
+        <Point X="6" Y="7.5" />
+        <Point X="6.375" Y="7.5" />
+        <Point X="6.375" Y="2.938" />
+        <Point X="7" Y="2.938" />
+      </Path>
+      <MemberNameLabel ManuallyPlaced="true">
+        <Position X="0.066" Y="0.322" />
+      </MemberNameLabel>
+    </AssociationLine>
+    <TypeIdentifier>
+      <HashCode>AgQCCCAMAiABAAoAAAoQCAAGAAAAWIQAYIIAAEFCRSA=</HashCode>
+      <FileName>Assets\Scripts\DragObject.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Property Name="GameManager" />
+    </ShowAsAssociation>
+  </Class>
+  <Class Name="CheckerGeneration">
+    <Position X="10.25" Y="1.5" Width="1.5" />
+    <Compartments>
+      <Compartment Name="Fields" Collapsed="true" />
+    </Compartments>
+    <TypeIdentifier>
+      <HashCode>gAAAEAAEgCAABEAAAAgBAAAAAAACAAAAAAABAAAAgAA=</HashCode>
+      <FileName>Assets\Scripts\BoardFunctions\CheckerGeneration.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="GameManager">
+    <Position X="7" Y="1.25" Width="1.5" />
+    <Compartments>
+      <Compartment Name="Fields" Collapsed="true" />
+    </Compartments>
+    <AssociationLine Name="CheckerGeneration" Type="CheckerGeneration" FixedFromPoint="true" FixedToPoint="true">
+      <Path>
+        <Point X="8.5" Y="3.246" />
+        <Point X="8.875" Y="3.246" />
+        <Point X="8.875" Y="2.75" />
+        <Point X="10.25" Y="2.75" />
+      </Path>
+    </AssociationLine>
+    <TypeIdentifier>
+      <HashCode>AQACQAgADFAAAAAAAgAaAkgAEAABAIAABAAAAABQBCA=</HashCode>
+      <FileName>Assets\GameManager.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Property Name="CheckerGeneration" />
+    </ShowAsAssociation>
+  </Class>
+  <Class Name="Checker" Collapsed="true">
+    <Position X="14.75" Y="5.25" Width="1.5" />
+    <Compartments>
+      <Compartment Name="Fields" Collapsed="true" />
+      <Compartment Name="Methods" Collapsed="true" />
+    </Compartments>
+    <AssociationLine Name="BoardTile" Type="BoardTile" FixedFromPoint="true" FixedToPoint="true">
+      <Path>
+        <Point X="14.75" Y="5.531" />
+        <Point X="14.375" Y="5.531" />
+        <Point X="14.375" Y="6.562" />
+        <Point X="14" Y="6.562" />
+      </Path>
+    </AssociationLine>
+    <TypeIdentifier>
+      <HashCode>AAAACAAAIABAAgAAAAAAAEAAAACAACCAEgAAAAAAABA=</HashCode>
+      <FileName>Assets\Scripts\BoardFunctions\CheckerGeneration.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Property Name="BoardTile" />
+    </ShowAsAssociation>
+  </Class>
+  <Class Name="Queen" Collapsed="true">
+    <Position X="14.75" Y="7.5" Width="1.5" />
+    <InheritanceLine Type="Checker" FixedToPoint="true">
+      <Path>
+        <Point X="15.5" Y="5.812" />
+        <Point X="15.5" Y="7.125" />
+        <Point X="15.438" Y="7.125" />
+        <Point X="15.438" Y="7.5" />
+      </Path>
+    </InheritanceLine>
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABA=</HashCode>
+      <FileName>Assets\Scripts\BoardFunctions\CheckerGeneration.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="BoardTile">
+    <Position X="12.5" Y="5.5" Width="1.5" />
+    <Compartments>
+      <Compartment Name="Methods" Collapsed="true" />
+    </Compartments>
+    <TypeIdentifier>
+      <HashCode>AAAAgAAAAAADACAAggAUACAADAIAAACAAAAACGCBQgA=</HashCode>
+      <FileName>Assets\Scripts\BoardFunctions\CheckerGeneration.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Property Name="Board" />
+    </ShowAsAssociation>
+  </Class>
+  <Class Name="Board">
+    <Position X="12.25" Y="2" Width="1.5" />
+    <Compartments>
+      <Compartment Name="Methods" Collapsed="true" />
+      <Compartment Name="Fields" Collapsed="true" />
+    </Compartments>
+    <AssociationLine Name="CheckerGeneration" Type="CheckerGeneration" FixedToPoint="true">
+      <Path>
+        <Point X="12.25" Y="2.812" />
+        <Point X="11.75" Y="2.812" />
+      </Path>
+    </AssociationLine>
+    <TypeIdentifier>
+      <HashCode>gAAAJIgCCCAACA4gAAEESgAAAABABAgACAAoAApBgIA=</HashCode>
+      <FileName>Assets\Scripts\BoardFunctions\CheckerGeneration.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Property Name="CheckerGeneration" />
+    </ShowAsAssociation>
+  </Class>
+  <Class Name="gameValues">
+    <Position X="4" Y="1" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AIAAIAAAAIBEAEAAACAQAAAAIAAAAACAAgAAAAAEBMA=</HashCode>
+      <FileName>Assets\Scripts\BoardFunctions\CheckerGeneration.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="GetValidMoves">
+    <Position X="8.5" Y="6.25" Width="1.5" />
+    <AssociationLine Name="DragObject" Type="DragObject" FixedFromPoint="true" FixedToPoint="true">
+      <Path>
+        <Point X="8.5" Y="8.375" />
+        <Point X="8.125" Y="8.375" />
+        <Point X="8.125" Y="7.187" />
+        <Point X="6.458" Y="7.187" Type="JumpStart" />
+        <Point X="6.292" Y="7.187" Type="JumpEnd" />
+        <Point X="6" Y="7.187" />
+      </Path>
+    </AssociationLine>
+    <TypeIdentifier>
+      <HashCode>AgQgAkAAACAAAAAAAAgAAAAAAAAAggAAAAAAIABAAQA=</HashCode>
+      <FileName>Assets\Scripts\GetValidMoves.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Property Name="DragObject" />
+    </ShowAsAssociation>
+  </Class>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>

@@ -23,6 +23,15 @@ public class DragObject : MonoBehaviour
     Ray ray;
     private AudioSource source;
         [SerializeField] private List<AudioClip> audioClips;
+
+    public GameManager GameManager
+    {
+        get => default;
+        set
+        {
+        }
+    }
+
     void Start()
     {
         Tempchecker = new Checker(null, 1);
@@ -42,7 +51,6 @@ public class DragObject : MonoBehaviour
         movable_checkers = GetValidMoves.MovableCheckers(gameBoard, gameBoard.getTurn());
         Checker SelectedPiece = null;
         SelectedPiece = PieceFromTransform(location);
-
         if (SelectedPiece == null || !movable_checkers.Contains(SelectedPiece) || gameBoard.getTurn() != SelectedPiece.GetColor()) return;
         moves = GetValidMoves.Get_Valid_Moves(gameBoard, index_x, index_z);
         GameObject Board = GameObject.Find("Board");
@@ -58,21 +66,23 @@ public class DragObject : MonoBehaviour
     } // checkes if mouse is held, shows avelable moves for the checker
     public void Update()
     {
+        if (Input.GetKeyUp(KeyCode.LeftArrow))
+        {
+            manager.GetComponent<GameManager>().previus_move();
+            manager.GetComponent<ComputerPlayer>().Logic_To_Display(gameBoard, manager.GetComponent<GameManager>().Moves_Played.Peek());
+        }
         if (manager.GetComponent<GameManager>().Playing_Ai && manager.GetComponent<GameManager>().moveMade == true && Time.frameCount % 30 == 0)
         {
             manager.GetComponent<GameManager>().SetCalculatingText(true);
             manager.GetComponent<GameManager>().doingMove = true;  
-            
-
         }
-        if (manager.GetComponent<GameManager>().doingMove && Time.frameCount % 60 == 0 )
+        if (manager.GetComponent<GameManager>().doingMove && Time.frameCount %120== 0)
         {
             ComputerMove();
             manager.GetComponent<GameManager>().SetCalculatingText(false);
             manager.GetComponent<GameManager>().doingMove = false;
         }
     } // works every frame (60fps) checkes if a player made a move and calls the computer move function for it
-
     private void OnTriggerEnter(Collider other)
     {
         if (other.gameObject.tag == "Highlight")
@@ -230,10 +240,6 @@ public class DragObject : MonoBehaviour
             manager.GetComponent<GameManager>().EndGame(gameBoard.getTurn());
         }
     }
-    private void OnMouseUpAsButton()
-    {
-
-    }
     private void playMovingNoice(Checker c)
     {
         GameObject Board = GameObject.Find("Board");
@@ -344,8 +350,6 @@ public class DragObject : MonoBehaviour
     {
         while (tileStack.Count > 0)
         {
-            //BoardTile tile = tileStack.Pop();
-            //Debug.Log(tile.getX() +" "+ tile.getZ());
             tileStack.Pop().SetTag(true);
         }
     }// helper function for backtrack
