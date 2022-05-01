@@ -11,10 +11,14 @@ public class ComputerPlayer : MonoBehaviour
     GameObject GameManager;
     public Dictionary<string, double> TranspositionTable;
     public int possitions_looked;
+    public int possitions_Transposed;
+    int[,] directions;
     // Start is called before the first frame update
     void Start()
     {
         possitions_looked = 0;
+        possitions_Transposed = 0;
+        int[,] directions = new int[4, 2] { { 1, 1 }, { 1, -1 }, { -1, -1 }, { -1, 1 } };
         UnityEngine.Debug.Log(Application.dataPath);
         tileStack = new Stack<BoardTile>();
         GameManager = GameObject.Find("Game_Manager");
@@ -115,7 +119,6 @@ public class ComputerPlayer : MonoBehaviour
             return CanTakeQueenLogic(logic_board, index_x, index_z);
         char pieceValue = logic_board[index_x, index_z];
         List<char[,]> moves = new List<char[,]>();
-        int[,] directions = new int[4, 2] { { 1, 1 }, { 1, -1 }, { -1, -1 }, { -1, 1 } };
         for (int rep = 0; rep < 4; rep++)
         {
             char[,] temp_move = (char[,])logic_board.Clone();
@@ -151,10 +154,11 @@ public class ComputerPlayer : MonoBehaviour
     {
         int i;
         int pieceValue = logic_board[index_x, index_z];
+        if(directions == null)
+             directions = new int[4, 2] { { 1, 1 }, { 1, -1 }, { -1, -1 }, { -1, 1 } };
         if (pieceValue > 2)
             return MovementLogicQueen(logic_board, index_x, index_z);
         List<char[,]> moves = new List<char[,]>();
-        int[,] directions = new int[4, 2] { { 1, 1 }, { 1, -1 }, { -1, -1 }, { -1, 1 } };
         if (pieceValue == gameValues.whiteChecker())
             i = 2;
         else
@@ -183,7 +187,6 @@ public class ComputerPlayer : MonoBehaviour
     public List<char[,]> MovementLogicQueen(char[,] logic_board, int index_x, int index_z)
     {
         List<char[,]> moves = new List<char[,]>();
-        int[,] directions = new int[4, 2] { { 1, 1 }, { 1, -1 }, { -1, -1 }, { -1, 1 } };
         int peiceValue = logic_board[index_x, index_z];
         for (int i = 0; i < 4; i++)
         {
@@ -211,7 +214,6 @@ public class ComputerPlayer : MonoBehaviour
     {
         int peiceValue = logic_board[index_x, index_z];
         List<char[,]> moves = new List<char[,]>();
-        int[,] directions = new int[4, 2] { { 1, 1 }, { 1, -1 }, { -1, -1 }, { -1, 1 } };
         for (int i = 0; i < 4; i++)
         {
             int temp_x = index_x + directions[i, 0];
@@ -282,7 +284,8 @@ public class ComputerPlayer : MonoBehaviour
 
             }
         }
-        TotalEval = CheckerCount + QueenCount * 8 + CentralizedCheckers;
+        
+        TotalEval = CheckerCount + QueenCount * 8 + CentralizedCheckers + back_checkers(logic_board,side);
         if (TotalEval == 0)
             return double.NegativeInfinity;
         return TotalEval;
@@ -293,27 +296,52 @@ public class ComputerPlayer : MonoBehaviour
         if (logic_board[index_x, index_z] % 2 == gameValues.whiteChecker() % 2)
         {
             if (index_x == 4)
-                totalEval += 0.1;
+                totalEval += 0.14;
             if (index_x == 5)
-                totalEval += 0.07;
+                totalEval += 0.08;
             if (index_z >= 3 && index_z <= 5)
-                totalEval += 0.2;
+                totalEval += 0.18;
         }
         else
         {
             if (index_x == 5)
-                totalEval += 0.1;
+                totalEval += 0.14;
             if (index_x == 4)
-                totalEval += 0.07;
+                totalEval += 0.08;
             if (index_z >= 3 && index_z <= 5)
-                totalEval += 0.2;
+                totalEval += 0.18;
         }
         return totalEval;
+    }
+    public double back_checkers(char[,] logic_board, int side)
+    {
+        double eval = 0;
+        if (side == 1)
+        {
+            for (int i = 0; i < 10; i += 2)
+            {
+                if (logic_board[0, i] == '1')
+                    eval += 0.1;
+            }
+        }
+        else
+        {
+            for (int i = 1; i < 10; i += 2)
+            {
+                if (logic_board[9, i] == '2')
+                    eval += 0.1;
+            }
+        }
+        return eval;
     }
     public double Logic_Board_Evalution(char[,] logic_Board)
     {
         double white_eval = Evaluate_Logic(logic_Board, 1);
         double black_eval = Evaluate_Logic(logic_Board, 2);
+        if (white_eval == 0)
+            return double.NegativeInfinity;
+        if (black_eval == 0)
+            return double.PositiveInfinity;
         return white_eval - black_eval;
     }// returns the evaluation of one side subtracted by another, positive for white winning, negetive for black, 0 for a draw
     public char[,] Pick_Logic_Move(char[,] logic_Board, int side)
@@ -343,6 +371,7 @@ public class ComputerPlayer : MonoBehaviour
                         bestMove = move;
                         MaxEval = MoveEval;
                     }
+                    possitions_Transposed++;
                 }
                 else
                 {
@@ -357,8 +386,9 @@ public class ComputerPlayer : MonoBehaviour
 
             }
             st.Stop();
-            UnityEngine.Debug.Log("ammount of possitions evaluated = " + possitions_looked + ". time elapsed " + st.ElapsedMilliseconds + " ms");
+            UnityEngine.Debug.Log("ammount of possitions evaluated = " + possitions_looked + " possitions transopsed "+possitions_Transposed+". time elapsed " + st.ElapsedMilliseconds + " ms");
             possitions_looked = 0;
+            possitions_Transposed = 0;
             return bestMove;
         }
         else
@@ -375,6 +405,7 @@ public class ComputerPlayer : MonoBehaviour
                         bestMove = move;
                         MinEval = MoveEval;
                     }
+                    possitions_Transposed++;
                 }
                 else
                 {
@@ -389,8 +420,9 @@ public class ComputerPlayer : MonoBehaviour
 
             }
             st.Stop();
-            UnityEngine.Debug.Log("ammount of possitions looked = " + possitions_looked + ". time elapsed " + st.ElapsedMilliseconds + " ms");
+            UnityEngine.Debug.Log("ammount of possitions evaluated = " + possitions_looked + " possitions transopsed " + possitions_Transposed + ". time elapsed " + st.ElapsedMilliseconds + " ms");
             possitions_looked = 0;
+            possitions_Transposed = 0;
             return bestMove;
         }
 
@@ -408,50 +440,44 @@ public class ComputerPlayer : MonoBehaviour
         {
             List<char[,]> newPossitions = validMoves(logic_Board, 1);
             double maxEval = double.NegativeInfinity;
-            string femstringOfBestMove = null;
             foreach (char[,] possition in newPossitions)
             {
                 string femString = ToFemString(possition);
-                if (TranspositionTable.TryGetValue(femString, out eval)) { }
+                if (TranspositionTable.TryGetValue(femString, out eval)) { possitions_Transposed++; }
                 else
                 {
                     eval = Minimax(possition, deapth - 1, alpha, beta, false);
-
+                    if( gameValues.searchDeapth() - deapth <2)
+                        TranspositionTable.TryAdd(femString, eval);
                 }
-                // eval = Minimax(possition, deapth - 1, alpha, beta, false);
-
+                //eval = Minimax(possition, deapth - 1, alpha, beta, false);
                 maxEval = math.max(maxEval, eval);
-                femstringOfBestMove = maxEval == eval ? femString : femstringOfBestMove;
                 alpha = math.max(alpha, eval);
                 if (beta <= alpha)
                     break;
             }
-            if (femstringOfBestMove != null && gameValues.searchDeapth() - deapth <= 2)
-                TranspositionTable.TryAdd(femstringOfBestMove, eval);
             return maxEval;
         }
         else
         {
             List<char[,]> newPossitions = validMoves(logic_Board, 2);
             double minEval = double.PositiveInfinity;
-            string femstringOfBestMove = null;
             foreach (char[,] possition in newPossitions)
             {
                 string femString = ToFemString(possition);
-                if (TranspositionTable.TryGetValue(femString, out eval)) { }
+                if (TranspositionTable.TryGetValue(femString, out eval)) { possitions_Transposed++; }
                 else
                 {
                     eval = Minimax(possition, deapth - 1, alpha, beta, true);
+                    if (gameValues.searchDeapth() - deapth < 2)
+                        TranspositionTable.TryAdd(femString, eval);
                 }
                 //eval = Minimax(possition, deapth - 1, alpha, beta, true);
                 minEval = math.min(minEval, eval);
-                femstringOfBestMove = minEval == eval ? femString : femstringOfBestMove;
                 beta = math.min(beta, eval);
                 if (beta <= alpha)
                     break;
             }
-            if (femstringOfBestMove != null && gameValues.searchDeapth() - deapth <=2)
-                TranspositionTable.TryAdd(femstringOfBestMove, eval);
             return minEval;
         }
 

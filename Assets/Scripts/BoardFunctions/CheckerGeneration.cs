@@ -480,8 +480,3 @@ public class CheckerGeneration : MonoBehaviour
 
     }
 }
-
-
-// Update is called once per frame
-
-

@@ -2,47 +2,21 @@
 <ClassDiagram MajorVersion="1" MinorVersion="1">
   <Class Name="ComputerPlayer">
     <Position X="0.5" Y="2.25" Width="2.75" />
-    <Compartments>
-      <Compartment Name="Fields" Collapsed="true" />
-    </Compartments>
-    <NestedTypes>
-      <Class Name="ComputerPlayer.MyEqualityComparer" Collapsed="true">
-        <TypeIdentifier>
-          <NewMemberFileName>Assets\Scripts\ComputerPlayer.cs</NewMemberFileName>
-        </TypeIdentifier>
-        <Lollipop Position="0.2" />
-      </Class>
-    </NestedTypes>
-    <AssociationLine Name="GameManager1" Type="GameManager" ManuallyRouted="true" FixedFromPoint="true" FixedToPoint="true">
-      <Path>
-        <Point X="3.25" Y="5.438" />
-        <Point X="3.84" Y="5.438" />
-        <Point X="3.84" Y="5.057" />
-        <Point X="6.292" Y="5.057" Type="JumpStart" />
-        <Point X="6.458" Y="5.057" Type="JumpEnd" />
-        <Point X="6.625" Y="5.057" />
-        <Point X="6.625" Y="2.938" />
-        <Point X="7" Y="2.938" />
-      </Path>
-    </AssociationLine>
     <TypeIdentifier>
       <HashCode>AgRAAQQQACAAAAAEAEBIAAQAAAAAAAAAAGgAAQBAAQE=</HashCode>
       <FileName>Assets\Scripts\ComputerPlayer.cs</FileName>
     </TypeIdentifier>
-    <ShowAsAssociation>
-      <Property Name="GameManager1" />
-    </ShowAsAssociation>
   </Class>
   <Class Name="DragObject">
-    <Position X="4.5" Y="5.25" Width="1.5" />
+    <Position X="4" Y="4.75" Width="2.25" />
     <Compartments>
       <Compartment Name="Fields" Collapsed="true" />
     </Compartments>
     <AssociationLine Name="GameManager" Type="GameManager" FixedFromPoint="true" FixedToPoint="true">
       <Path>
-        <Point X="6" Y="7.5" />
-        <Point X="6.375" Y="7.5" />
-        <Point X="6.375" Y="2.938" />
+        <Point X="6.25" Y="6.901" />
+        <Point X="6.625" Y="6.901" />
+        <Point X="6.625" Y="2.938" />
         <Point X="7" Y="2.938" />
       </Path>
       <MemberNameLabel ManuallyPlaced="true">
@@ -50,7 +24,7 @@
       </MemberNameLabel>
     </AssociationLine>
     <TypeIdentifier>
-      <HashCode>AgQCCCAMAiABAAoAAAoQCAAGAAAAWIQAYIIAAEFCRSA=</HashCode>
+      <HashCode>AgQCCCAMAiABAAoAAAoQAAAGAAAAWIQAYIIAAEFCRSA=</HashCode>
       <FileName>Assets\Scripts\DragObject.cs</FileName>
     </TypeIdentifier>
     <ShowAsAssociation>
@@ -59,11 +33,8 @@
   </Class>
   <Class Name="CheckerGeneration">
     <Position X="10.25" Y="1.5" Width="1.5" />
-    <Compartments>
-      <Compartment Name="Fields" Collapsed="true" />
-    </Compartments>
     <TypeIdentifier>
-      <HashCode>gAAAEAAEgCAABEAAAAgBAAAAAAACAAAAAAABAAAAgAA=</HashCode>
+      <HashCode>gAAAEAAEACAABEAAAAgBAAAAAAACAAAAAAABAAAAgAA=</HashCode>
       <FileName>Assets\Scripts\BoardFunctions\CheckerGeneration.cs</FileName>
     </TypeIdentifier>
   </Class>
@@ -76,8 +47,8 @@
       <Path>
         <Point X="8.5" Y="3.246" />
         <Point X="8.875" Y="3.246" />
-        <Point X="8.875" Y="2.75" />
-        <Point X="10.25" Y="2.75" />
+        <Point X="8.875" Y="3.113" />
+        <Point X="10.25" Y="3.113" />
       </Path>
     </AssociationLine>
     <TypeIdentifier>
@@ -146,12 +117,15 @@
     </Compartments>
     <AssociationLine Name="CheckerGeneration" Type="CheckerGeneration" FixedToPoint="true">
       <Path>
-        <Point X="12.25" Y="2.812" />
-        <Point X="11.75" Y="2.812" />
+        <Point X="13" Y="2" />
+        <Point X="13" Y="1.75" />
+        <Point X="12" Y="1.75" />
+        <Point X="12" Y="3.194" />
+        <Point X="11.75" Y="3.194" />
       </Path>
     </AssociationLine>
     <TypeIdentifier>
-      <HashCode>gAAAJIgCCCAACA4gAAEESgAAAABABAgACAAoAApBgIA=</HashCode>
+      <HashCode>gAAAJIgACCAACAIgAAAESgAAAABABAgAAAAoAAoBgIA=</HashCode>
       <FileName>Assets\Scripts\BoardFunctions\CheckerGeneration.cs</FileName>
     </TypeIdentifier>
     <ShowAsAssociation>
@@ -161,7 +135,7 @@
   <Class Name="gameValues">
     <Position X="4" Y="1" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>AIAAIAAAAIBEAEAAACAQAAAAIAAAAACAAgAAAAAEBMA=</HashCode>
+      <HashCode>AIAAIAAAAABEAEAAACAQAAAAAAAAAACAAgAAAAAABMA=</HashCode>
       <FileName>Assets\Scripts\BoardFunctions\CheckerGeneration.cs</FileName>
     </TypeIdentifier>
   </Class>
@@ -171,10 +145,10 @@
       <Path>
         <Point X="8.5" Y="8.375" />
         <Point X="8.125" Y="8.375" />
-        <Point X="8.125" Y="7.187" />
-        <Point X="6.458" Y="7.187" Type="JumpStart" />
-        <Point X="6.292" Y="7.187" Type="JumpEnd" />
-        <Point X="6" Y="7.187" />
+        <Point X="8.125" Y="6.602" />
+        <Point X="6.708" Y="6.602" Type="JumpStart" />
+        <Point X="6.542" Y="6.602" Type="JumpEnd" />
+        <Point X="6.25" Y="6.602" />
       </Path>
     </AssociationLine>
     <TypeIdentifier>
